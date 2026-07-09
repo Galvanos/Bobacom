@@ -31,7 +31,7 @@ public class OrdineProdotto {
 	@JoinColumn(
 			name="prodotto_id",
 			referencedColumnName = "id",
-			foreignKey = @ForeignKey(name ="fk_ordine_prodotto")
+			foreignKey = @ForeignKey(name ="fk_prodotto_ordine")
 			)
 	private Prodotto prodotto; 
 	

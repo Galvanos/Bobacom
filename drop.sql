@@ -17,7 +17,7 @@
        drop constraint if exists fk_ordine_prodotto;
 
     alter table if exists ordine_prodotto 
-       drop constraint if exists fk_ordine_prodotto;
+       drop constraint if exists fk_prodotto_ordine;
 
     alter table if exists prodotto_categorie 
        drop constraint if exists FKd9yh6jm4nqb4baamuihqw64fl;
