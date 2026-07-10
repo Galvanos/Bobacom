@@ -1,10 +1,17 @@
 package com.bobacom.backend.model;
 
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -18,23 +25,25 @@ public class Ingrediente {
 	private String nome;
 
 	@Column
-	private String descrizione;
+	private String descrizione;	// descrizione, principalmente per mostrarla in UI
 	
-	@Column(name="sovraprezzo_aggiunta")
-	private float sovraprezzoAggiunta;
+	@Column(name="sovraprezzo_aggiunta") 
+	private float sovraprezzoAggiunta; // il prezzo che sostiene il cliente quando aggiunge questo ingrediente al suo prodotto
 	
 	@Column(name="prezzo_restock")
-	private float prezzoRestock;
+	private float prezzoRestock;	// il prezzo unitario che viene a costare all'azienda per il restock dell'ingrediente
 	
 	@Column
-	private String colore;
+	private String colore; // pensato per il seguente utilizzo nella UI
 	
-	@Column(name="is_vegan")
-	private Boolean isVegan;
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(
+			name="ingrediente_allergeni",
+			joinColumns = @JoinColumn (name = "ingrediente_id" ),
+			inverseJoinColumns = @JoinColumn (name = "allergene_id"))
+	List<Allergeni> allergeni;	// lista allergeni, gli oggetti contengono nome e icona da usare in UI
 	
-	@Column(name="is_lactose_free")
-	private Boolean isLactoseFree;
-	
-	@Column(name="is_gluten_free")
-	private Boolean isGlutenFree;
-}
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name="categoria_id")
+	private CategoriaIngrediente categoriaIngrediente;	// categoria, aka in che sezione della ui composizione prodotto 
+}														// vogliamo inserirlo, es: thé, succo, latte, topping, etc

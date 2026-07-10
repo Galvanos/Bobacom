@@ -25,22 +25,31 @@ public class Prodotto {
 	private String nome;
 	
 	@Column
-	private String descrizione;
+	private String descrizione;		// descrizione del prodotto, da usare in UI
 	
 	@Column(name="img_url")
-	private String imgUrl;
+	private String imgUrl;			// url immagine, da usare in UI
 	
 	@ManyToMany (fetch = FetchType.EAGER)
 	@JoinTable(
-			name="prodotto_categorie",
+			name="prodotto_tag",
 			joinColumns = @JoinColumn (name = "prodotto_id" ),
-			inverseJoinColumns = @JoinColumn (name = "categoria_id")
+			inverseJoinColumns = @JoinColumn (name = "tag_id")
 			)
-	List<Categoria> categorie;
+	List<TagProdotto> tag;	// tag del prodotto, e.g. new, limited, cool drink, warm drink, vegan, etc
+	
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(
+			name="prodotto_promozione",
+			joinColumns = @JoinColumn (name = "prodotto_id" ),
+			inverseJoinColumns = @JoinColumn (name = "promozione_id")
+			)
+	List<Promozione> promozione;	// sconti legati al prodotto
 	
 	@OneToMany(
 			mappedBy="prodotto",
 			fetch = FetchType.EAGER
 			)
-	private List<Composizione> composizione;
+	private List<Composizione> composizione;	// lista di elementi "composizione" che ognuno contengono
+												//  un'ingrediente e la relativa quantitá
 }
