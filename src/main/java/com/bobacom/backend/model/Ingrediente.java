@@ -13,7 +13,17 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name="ingredienti")
 public class Ingrediente {
@@ -26,6 +36,9 @@ public class Ingrediente {
 
 	@Column
 	private String descrizione;	// descrizione, principalmente per mostrarla in UI
+	
+	@Column(name="quantita_stock")
+	private Long quantitaStock;	//quantitá di pezzi in stock
 	
 	@Column(name="sovraprezzo_aggiunta") 
 	private float sovraprezzoAggiunta; // il prezzo che sostiene il cliente quando aggiunge questo ingrediente al suo prodotto

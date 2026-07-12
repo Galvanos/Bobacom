@@ -2,7 +2,7 @@ package com.bobacom.backend.model;
 
 import java.math.BigDecimal;
 
-import com.bobacom.backend.enums.Ruoli;
+import com.bobacom.backend.enums.Ruolo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,7 +10,17 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Builder
+@AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(name="Utente")
 public class Utente {
@@ -28,7 +38,7 @@ public class Utente {
 	private String password;
 	
 	@Column
-	private Ruoli ruolo;
+	private Ruolo ruolo;
 	
 	@Column
 	private BigDecimal credito;

@@ -1,5 +1,5 @@
 package com.bobacom.backend.service.interfaces;
 
-public class IProdottoService {
+public interface IProdottoService {
 
 }
