@@ -58,7 +58,7 @@ public class Prodotto {
 			)
 	List<Promozione> promozione;	// sconti legati al prodotto
 	
-	@OneToMany(
+	@OneToMany( 
 			mappedBy="prodotto",
 			fetch = FetchType.EAGER,
 			cascade = CascadeType.ALL, //salva/aggiorna composizione
