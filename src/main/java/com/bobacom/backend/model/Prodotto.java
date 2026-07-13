@@ -3,6 +3,7 @@ package com.bobacom.backend.model;
 
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -59,7 +60,9 @@ public class Prodotto {
 	
 	@OneToMany(
 			mappedBy="prodotto",
-			fetch = FetchType.EAGER
+			fetch = FetchType.EAGER,
+			cascade = CascadeType.ALL, //salva/aggiorna composizione
+			orphanRemoval = true //rimuove ingrediente eliminato se composizione modificata
 			)
 	private List<Composizione> composizione;	// lista di elementi "composizione" che ognuno contengono
 												//  un'ingrediente e la relativa quantitá
