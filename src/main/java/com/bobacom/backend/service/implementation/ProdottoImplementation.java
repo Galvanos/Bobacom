@@ -3,11 +3,14 @@ package com.bobacom.backend.service.implementation;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bobacom.backend.dto.input.ProdottoRequest;
+import com.bobacom.backend.dto.output.ProdottoDTO;
 import com.bobacom.backend.exceptions.AcademyException;
+import com.bobacom.backend.mapping.ProdottoMap;
 import com.bobacom.backend.model.Composizione;
 import com.bobacom.backend.model.Prodotto;
 import com.bobacom.backend.repository.IProdottoRepository;
@@ -110,6 +113,20 @@ public class ProdottoImplementation implements IProdottoService{
 				.orElseThrow(() -> new AcademyException("prodotto.ntfnd"));
 		prodottoRep.delete(p);
 		
+	}
+
+	@Override
+	public List<ProdottoDTO> list() throws Exception {
+		List <Prodotto> lP = prodottoRep.findAll(Sort.by("nome"));
+		return ProdottoMap.buildProdottoDTOList(lP);
+	}
+
+	@Override
+	public ProdottoDTO getById(Integer id) throws Exception {
+		log.debug("getById {}", id);
+		Prodotto p = prodottoRep.findById(id)
+				.orElseThrow(() -> new AcademyException("prodotto.ntfnd"));
+		return ProdottoMap.buildProdottoDTO(p);
 	}
 
 }

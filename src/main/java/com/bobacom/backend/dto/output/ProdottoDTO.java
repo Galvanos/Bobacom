@@ -16,6 +16,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class ProdottoDTO {
 	private Integer id;
 	private String nome;
