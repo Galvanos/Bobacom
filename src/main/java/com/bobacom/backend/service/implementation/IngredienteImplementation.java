@@ -2,10 +2,12 @@ package com.bobacom.backend.service.implementation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
 import com.bobacom.backend.dto.input.IngredienteRequest;
+import com.bobacom.backend.exceptions.AcademyException;
 import com.bobacom.backend.model.Allergeni;
 import com.bobacom.backend.model.CategoriaIngrediente;
 import com.bobacom.backend.model.Ingrediente;
@@ -14,6 +16,7 @@ import com.bobacom.backend.repository.ICategoriaRepository;
 import com.bobacom.backend.repository.IIngredienteRepository;
 import com.bobacom.backend.service.interfaces.IIngredienteService;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,14 +51,15 @@ public class IngredienteImplementation implements IIngredienteService{
 	}
 	@Transactional
 	@Override
-	public void update(IngredienteRequest req) {
-		// TODO Auto-generated method stub
-		
+	public void update(IngredienteRequest req) throws Exception{
+		Ingrediente ingrediente = ingredienteRepo.findById(req.getId()).orElseThrow(() -> new AcademyException("ingrediente non trovato;"));
+		CategoriaIngrediente categoria = Optional.ofNullable(req.getIdCategoriaIngrediente())
+			    .flatMap(categoriaRepo::findById).orElseThrow(() -> new AcademyException("Categoria non trovata"));
 	}
 	@Transactional
 	@Override
-	public void delete(Integer id) {
-		// TODO Auto-generated method stub
-		
+	public void delete(Integer id) throws Exception{
+		Ingrediente ing = ingredienteRepo.findById(id).orElseThrow(() -> new AcademyException("ingrediente non trovato"));
+		ingredienteRepo.delete(ing);		
 	}
 }

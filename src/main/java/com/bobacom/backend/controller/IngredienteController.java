@@ -1,6 +1,8 @@
 package com.bobacom.backend.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,5 +26,11 @@ public class IngredienteController {
 	public ResponseEntity<ResponseDTO> create(@RequestBody (required=true) IngredienteRequest request) throws Exception{
 		ingredienteService.create(request);
 		return ResponseEntity.ok(ResponseDTO.builder().msg("Ingrediente aggiunto").build());
+	}
+	
+	@DeleteMapping("delete/{id}")
+	public ResponseEntity<ResponseDTO> delete(@PathVariable (required=true) Integer id) throws Exception{
+		ingredienteService.delete(id);
+		return ResponseEntity.ok(ResponseDTO.builder().msg("Ingrediente eliminato").build());
 	}
 }

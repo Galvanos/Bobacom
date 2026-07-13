@@ -1,6 +1,5 @@
 package com.bobacom.backend.model;
 
-import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

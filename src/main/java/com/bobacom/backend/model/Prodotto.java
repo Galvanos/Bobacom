@@ -42,8 +42,8 @@ public class Prodotto {
 	@Column(name="img_url")
 	private String imgUrl;			// url immagine, da usare in UI
 	
-	@ManyToMany (fetch = FetchType.EAGER)
-	@JoinTable(
+	@ManyToMany (fetch = FetchType.EAGER)	// attenzione che essendo mappata anche dall'altra parte 
+	@JoinTable(								// potrebbe volerci la cancellazione manuale di entrambi
 			name="prodotto_tag",
 			joinColumns = @JoinColumn (name = "prodotto_id" ),
 			inverseJoinColumns = @JoinColumn (name = "tag_id")
