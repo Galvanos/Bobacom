@@ -22,7 +22,8 @@
 
     create table ingrediente_allergeni (
         allergene_id integer not null,
-        ingrediente_id integer not null
+        ingrediente_id integer not null,
+        primary key (allergene_id, ingrediente_id)
     );
 
     create table ingredienti (

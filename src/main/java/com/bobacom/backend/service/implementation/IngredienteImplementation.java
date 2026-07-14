@@ -1,12 +1,12 @@
 package com.bobacom.backend.service.implementation;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
 import com.bobacom.backend.dto.input.IngredienteRequest;
-import com.bobacom.backend.model.Allergeni;
+import com.bobacom.backend.exceptions.AcademyException;
 import com.bobacom.backend.model.CategoriaIngrediente;
 import com.bobacom.backend.model.Ingrediente;
 import com.bobacom.backend.repository.IAllergeniRepository;
@@ -31,9 +31,7 @@ public class IngredienteImplementation implements IIngredienteService{
 	public void create(IngredienteRequest req) throws Exception{
 		CategoriaIngrediente categoria = categoriaRepo.findById(req.getIdCategoriaIngrediente())
 				.orElseThrow(() -> new Exception("no such categoria with id: " + req.getIdCategoriaIngrediente()));
-		List<Allergeni> allergeni = new ArrayList<Allergeni>();
-		for(Integer id : req.getIdAllergene())
-			allergeni.add(allergeniRepo.findById(id).orElseThrow(() -> new Exception("no such allergene with id: " + id)));
+		
 		Ingrediente ingrediente = Ingrediente.builder().nome(req.getNome())
 														.descrizione(req.getDescrizione())
 														.colore(req.getColore())
@@ -41,21 +39,36 @@ public class IngredienteImplementation implements IIngredienteService{
 														.sovraprezzoAggiunta(req.getSovraprezzoAggiunta())
 														.prezzoRestock(req.getPrezzoRestock())
 														.categoriaIngrediente(categoria)
-														.allergeni(allergeni)
 														.build();
+		for(Integer id : req.getIdAllergene())
+			ingrediente.addAllergene(allergeniRepo.findById(id)
+					.orElseThrow(() -> new Exception("no such allergene with id: " + id)));
 		Integer insertedId = ingredienteRepo.save(ingrediente).getId();
 		log.debug("inserted ingredient id: {}", insertedId);
 	}
 	@Transactional
 	@Override
-	public void update(IngredienteRequest req) {
-		// TODO Auto-generated method stub
-		
+	public void update(IngredienteRequest req) throws Exception{
+		Ingrediente ingrediente = ingredienteRepo.findById(req.getId()).orElseThrow(() -> new AcademyException("ingrediente non trovato;"));
+		Optional.ofNullable(req.getIdCategoriaIngrediente())
+			.ifPresent(id -> categoriaRepo.findById(id)
+		        .ifPresentOrElse(ingrediente::setCategoriaIngrediente, () -> {
+		        	throw new AcademyException("no such categoria"); }));
+		Optional.ofNullable(req.getIdAllergene()).stream().flatMap(Collection::stream)
+			.forEach(a -> allergeniRepo.findById(a).ifPresentOrElse(ingrediente::addAllergene, () -> {
+	        	throw new AcademyException("no such categoria"); }));
+		Optional.ofNullable(req.getColore()).ifPresent(ingrediente::setColore);
+		Optional.ofNullable(req.getDescrizione()).ifPresent(ingrediente::setDescrizione);
+		Optional.ofNullable(req.getNome()).ifPresent(ingrediente::setNome);
+		Optional.ofNullable(req.getQuantitaStock()).ifPresent(ingrediente::setQuantitaStock);
+		Optional.ofNullable(req.getSovraprezzoAggiunta()).ifPresent(ingrediente::setSovraprezzoAggiunta);
+		Optional.ofNullable(req.getPrezzoRestock()).ifPresent(ingrediente::setPrezzoRestock);
+		ingredienteRepo.save(ingrediente);
 	}
 	@Transactional
 	@Override
-	public void delete(Integer id) {
-		// TODO Auto-generated method stub
-		
+	public void delete(Integer id) throws Exception{
+		Ingrediente ing = ingredienteRepo.findById(id).orElseThrow(() -> new AcademyException("ingrediente non trovato"));
+		ingredienteRepo.delete(ing);		
 	}
 }
