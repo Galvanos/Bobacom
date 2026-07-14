@@ -66,4 +66,4 @@
 
     drop table if exists tag_prodotto cascade;
 
-    drop table if exists Utente cascade;
+    drop table if exists utente cascade;
