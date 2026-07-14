@@ -75,7 +75,7 @@ public class IngredienteImplementation implements IIngredienteService{
 	}
 	@Override
 	public List<IngredienteDTO> list() throws Exception {
-		
+		ingredienteRepo.findAll().forEach(i -> );
 		return null;
 	}
 	
