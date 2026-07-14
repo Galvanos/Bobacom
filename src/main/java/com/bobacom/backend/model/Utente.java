@@ -30,13 +30,13 @@ public class Utente {
 	@GeneratedValue (strategy = GenerationType.IDENTITY)
 	private Integer id;
 	
-	@Column
+	@Column(unique = true, nullable = false)
 	private String username;
 	
-	@Column
+	@Column(nullable = false)
 	private String email;
 	
-	@Column
+	@Column(nullable = false)
 	private String password;
 	
 	@Enumerated(EnumType.STRING)

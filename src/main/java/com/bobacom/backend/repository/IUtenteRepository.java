@@ -1,0 +1,14 @@
+package com.bobacom.backend.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+import com.bobacom.backend.model.Utente;
+import java.util.List;
+
+
+public interface IUtenteRepository extends JpaRepository<Utente, Integer>,JpaSpecificationExecutor<Utente> {
+
+	List<Utente> findByUsername(String username);
+	boolean existsByUsername(String username);
+}

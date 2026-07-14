@@ -27,7 +27,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UtenteDTO {
 
-	//TODO aggiungere validazioni
 	private Integer id;
 	private String username;
 	private String email;
