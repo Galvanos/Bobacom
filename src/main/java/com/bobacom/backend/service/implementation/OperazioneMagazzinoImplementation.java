@@ -38,6 +38,8 @@ public class OperazioneMagazzinoImplementation implements IOperazioneMagazzinoSe
 																		.ingrediente(ingrediente)
 																		.build();
 		Integer insertedId = operazioneRepo.save(operazione).getId();
+		ingrediente.setPrezzoRestock(ingrediente.getPrezzoRestock() + operazione.getDeltaQuantita());
+		ingredienteRepo.save(ingrediente);
 		log.debug("id operazione inserita: {}", insertedId);
 	}
 
