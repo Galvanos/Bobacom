@@ -1,11 +1,13 @@
 package com.bobacom.backend.service.implementation;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
 import com.bobacom.backend.dto.input.IngredienteRequest;
+import com.bobacom.backend.dto.output.IngredienteDTO;
 import com.bobacom.backend.exceptions.AcademyException;
 import com.bobacom.backend.model.CategoriaIngrediente;
 import com.bobacom.backend.model.Ingrediente;
@@ -71,4 +73,11 @@ public class IngredienteImplementation implements IIngredienteService{
 		Ingrediente ing = ingredienteRepo.findById(id).orElseThrow(() -> new AcademyException("ingrediente non trovato"));
 		ingredienteRepo.delete(ing);		
 	}
+	@Override
+	public List<IngredienteDTO> list() throws Exception {
+		ingredienteRepo.findAll().forEach(i -> );
+		return null;
+	}
+	
+	
 }
