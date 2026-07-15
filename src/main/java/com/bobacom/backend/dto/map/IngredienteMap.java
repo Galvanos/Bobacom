@@ -1,5 +1,7 @@
 package com.bobacom.backend.dto.map;
 
+import java.util.stream.Collectors;
+
 import com.bobacom.backend.dto.output.IngredienteDTO;
 import com.bobacom.backend.model.Ingrediente;
 
@@ -14,7 +16,8 @@ public class IngredienteMap {
 										.quantitaStock(ingrediente.getQuantitaStock())
 										.categoriaIngrediente(CategoriaIngredienteMap.buildCategoriaIngredienteDTO(
 												ingrediente.getCategoriaIngrediente()))
-										.allergeni(null)
+										.allergeni(	ingrediente.getAllergeni().stream().map(
+												a -> AllergeniMap.buildAllergeniDTO(a)).collect(Collectors.toList()))
 										.build();
 	}
 }
