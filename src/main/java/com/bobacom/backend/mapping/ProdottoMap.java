@@ -5,7 +5,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.bobacom.backend.dto.output.ComposizioneDTO;
 import com.bobacom.backend.dto.output.ProdottoDTO;
+import com.bobacom.backend.dto.output.PromozioneDTO;
+import com.bobacom.backend.dto.output.TagProdottoDTO;
 import com.bobacom.backend.model.Prodotto;
 
 public class ProdottoMap {
@@ -18,15 +21,16 @@ public class ProdottoMap {
 	}
 	
 	public static ProdottoDTO buildProdottoDTO(Prodotto p) {
-		return ProdottoDTO.builder()
-				.id(p.getId())
-				.nome(p.getNome())
-				.descrizione(p.getDescrizione())
-				.imgUrl(p.getImgUrl())
-				.tag(p.getTag())
-				.promozione(p.getPromozione())
-				.composizione(p.getComposizione())
-				.build();
+	    return ProdottoDTO.builder()
+	            .id(p.getId())
+	            .nome(p.getNome())
+	            .descrizione(p.getDescrizione())
+	            .imgUrl(p.getImgUrl())
+	            .tag(TagMap.buildTagProdottoDTOList(p.getTag()))                    
+	            .promozione(PromozioneMap.buildPromozioneDTOList(p.getPromozione()))
+	            .composizione(ComposizioneMap.buildComposizioneDTOList(p.getComposizione())) 
+	            .build();
+	
 	}
 
 }

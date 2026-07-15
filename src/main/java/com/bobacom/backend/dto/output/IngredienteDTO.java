@@ -1,9 +1,6 @@
 package com.bobacom.backend.dto.output;
 
 import java.util.List;
-import com.bobacom.backend.model.Composizione;
-import com.bobacom.backend.model.Promozione;
-import com.bobacom.backend.model.TagProdotto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,13 +13,16 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProdottoDTO {
+public class IngredienteDTO {
 	private Integer id;
 	private String nome;
 	private String descrizione;
-	private String imgUrl;
-	List<TagProdottoDTO> tag;
-	List<PromozioneDTO> promozione;
-	private List<ComposizioneDTO> composizione;
-
+	private Long quantitaStock;
+	private float sovraprezzoAggiunta;
+	private float prezzoRestock;	
+	private String colore; 
+	List <AllergeniDTO> allergeni;
+	private CategoriaIngredienteDTO categoriaIngrediente;
 }
+
+
