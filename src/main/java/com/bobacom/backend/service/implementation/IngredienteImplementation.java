@@ -3,10 +3,12 @@ package com.bobacom.backend.service.implementation;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.bobacom.backend.dto.input.IngredienteRequest;
+import com.bobacom.backend.dto.map.IngredienteMap;
 import com.bobacom.backend.dto.output.IngredienteDTO;
 import com.bobacom.backend.exceptions.AcademyException;
 import com.bobacom.backend.model.CategoriaIngrediente;
@@ -75,8 +77,7 @@ public class IngredienteImplementation implements IIngredienteService{
 	}
 	@Override
 	public List<IngredienteDTO> list() throws Exception {
-		ingredienteRepo.findAll().forEach(i -> );
-		return null;
+		return ingredienteRepo.findAll().stream().map(i -> IngredienteMap.buildIngredienteDTO(i)).collect(Collectors.toList());
 	}
 	
 	
