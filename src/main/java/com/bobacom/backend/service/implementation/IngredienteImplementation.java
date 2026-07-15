@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.bobacom.backend.dto.input.IngredienteRequest;
+import com.bobacom.backend.dto.output.IngredienteDTO;
 import com.bobacom.backend.model.Allergeni;
 import com.bobacom.backend.model.CategoriaIngrediente;
 import com.bobacom.backend.model.Ingrediente;
@@ -57,5 +58,10 @@ public class IngredienteImplementation implements IIngredienteService{
 	public void delete(Integer id) {
 		// TODO Auto-generated method stub
 		
+	}
+	@Override
+	public List<IngredienteDTO> list() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

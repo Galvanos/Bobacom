@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.bobacom.backend.dto.map.IngredienteMap;
 import com.bobacom.backend.dto.output.AllergeniDTO;
 import com.bobacom.backend.dto.output.CategoriaIngredienteDTO;
 import com.bobacom.backend.dto.output.ComposizioneDTO;

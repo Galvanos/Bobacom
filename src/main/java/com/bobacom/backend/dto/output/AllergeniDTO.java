@@ -15,5 +15,4 @@ public class AllergeniDTO {
 	private Integer id;
 	private String nome;
 	private String urlIcona;
-
 }

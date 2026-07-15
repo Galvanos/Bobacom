@@ -11,18 +11,16 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class IngredienteDTO {
 	private Integer id;
 	private String nome;
 	private String descrizione;
 	private Long quantitaStock;
 	private float sovraprezzoAggiunta;
-	private float prezzoRestock;	
-	private String colore; 
-	List <AllergeniDTO> allergeni;
+	private float prezzoRestock;
+	private String colore;
+	private List<AllergeniDTO> allergeni;
 	private CategoriaIngredienteDTO categoriaIngrediente;
 }
-
-

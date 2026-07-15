@@ -1,52 +1,37 @@
-package com.bobacom.backend.model;
+package com.bobacom.backend.dto.output;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.bobacom.backend.enums.Ruolo;
+import com.bobacom.backend.model.Composizione;
+import com.bobacom.backend.model.Promozione;
+import com.bobacom.backend.model.TagProdotto;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Builder
-@AllArgsConstructor
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
-@Entity
-@Table(name="utente")
-public class Utente {
-	@Id
-	@GeneratedValue (strategy = GenerationType.IDENTITY)
+@AllArgsConstructor
+public class UtenteDTO {
+
 	private Integer id;
-	
-	@Column(unique = true, nullable = false)
 	private String username;
-	
-	@Column(nullable = false)
 	private String email;
-	
-	@Column(nullable = false)
 	private String password;
-	
-	@Enumerated(EnumType.STRING)
-	@Column
 	private Ruolo ruolo;
-	
-	@Column
 	private BigDecimal credito;
-	
-	@Column
 	private String indirizzo;
-	
 }
