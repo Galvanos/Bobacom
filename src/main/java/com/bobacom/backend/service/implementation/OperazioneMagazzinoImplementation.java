@@ -1,8 +1,12 @@
 package com.bobacom.backend.service.implementation;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.bobacom.backend.dto.input.OperazioneMagazzinoRequest;
+import com.bobacom.backend.dto.map.OperazioneMagazzinoMap;
+import com.bobacom.backend.dto.output.OperazioneMagazzinoDTO;
 import com.bobacom.backend.exceptions.AcademyException;
 import com.bobacom.backend.model.Ingrediente;
 import com.bobacom.backend.model.OperazioneMagazzino;
@@ -11,6 +15,7 @@ import com.bobacom.backend.repository.IOperazioneMagazzinoRepository;
 import com.bobacom.backend.service.interfaces.IOperazioneMagazzinoService;
 import com.bobacom.backend.utilities.DateOperations;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,6 +26,7 @@ public class OperazioneMagazzinoImplementation implements IOperazioneMagazzinoSe
 	private final IOperazioneMagazzinoRepository operazioneRepo;
 	private final IIngredienteRepository ingredienteRepo;
 	
+	@Transactional
 	@Override
 	public void create(OperazioneMagazzinoRequest req) {
 		Ingrediente ingrediente = ingredienteRepo.findById(req.getIdIngrediente())
@@ -33,6 +39,19 @@ public class OperazioneMagazzinoImplementation implements IOperazioneMagazzinoSe
 																		.build();
 		Integer insertedId = operazioneRepo.save(operazione).getId();
 		log.debug("id operazione inserita: {}", insertedId);
+	}
+
+	@Transactional
+	@Override
+	public void delete(Integer id) throws Exception {
+		OperazioneMagazzino operazione = operazioneRepo.findById(id).orElseThrow(
+				() -> new AcademyException("no such operazione"));
+		operazioneRepo.delete(operazione);
+	}
+
+	@Override
+	public List<OperazioneMagazzinoDTO> list() throws Exception {
+		return operazioneRepo.findAll().stream().map(o -> OperazioneMagazzinoMap.buildOperazioneMagazzinoDTO(o)).toList();
 	}
 
 }
