@@ -50,6 +50,8 @@
 
     drop table if exists ingredienti cascade;
 
+    drop table if exists key_values cascade;
+
     drop table if exists operazione_magazzino cascade;
 
     drop table if exists ordine cascade;

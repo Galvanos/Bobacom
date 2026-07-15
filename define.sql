@@ -38,6 +38,12 @@
         primary key (id)
     );
 
+    create table key_values (
+        key varchar(1024) not null,
+        values jsonb,
+        primary key (key)
+    );
+
     create table operazione_magazzino (
         data date,
         delta_quantita float4,
