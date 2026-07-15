@@ -5,6 +5,7 @@ import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,6 +20,7 @@ import lombok.experimental.Accessors;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
+@EqualsAndHashCode
 public class KeyValuesDTO {
 
 	/**
@@ -36,8 +38,9 @@ public class KeyValuesDTO {
 	 * @return il primo valore di {@link #values} o null se {@link #values} é vuoto o null
 	 */
 	public String getValue() {
-		if(values != null) {
-			return values.stream().findFirst().orElse(null);
+		if(values != null && !values.isEmpty()) {
+			//usando find first con gli stream dava null pointer exception se il primo elemento è null
+			return values.get(0);
 		}else {
 			return null;
 		}

@@ -39,9 +39,9 @@
     );
 
     create table key_values (
-        key varchar(1024) not null,
-        values jsonb,
-        primary key (key)
+        key_for_storage varchar(1024) not null,
+        values_stored jsonb,
+        primary key (key_for_storage)
     );
 
     create table operazione_magazzino (

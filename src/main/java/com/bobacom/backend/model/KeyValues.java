@@ -34,14 +34,14 @@ public class KeyValues {
 	 * Chiave a cui sono associati valori stringa
 	 */
 	@Id
-	@Column(length = 1024)
+	@Column(length = 1024, name = "key_for_storage")//key è una parola riservata per h2, per cui non va bene come identificatore
 	private String key;
 	
 	/**
 	 * Valori stringa associati alla chiave memorizzati come array JSON
 	 */
 	@JdbcTypeCode(SqlTypes.JSON_ARRAY)
-	@Column(name = "values")
+	@Column(name = "values_stored",nullable = true)//values è una parola riservata di sql e ad alcune implementazioni non piace
 	private List<String> values;
 	
 }

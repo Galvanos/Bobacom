@@ -2,6 +2,8 @@ package com.bobacom.backend.service.interfaces;
 
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import com.bobacom.backend.dto.output.KeyValuesDTO;
 
 public interface IKeyValuesService {
@@ -24,6 +26,29 @@ public interface IKeyValuesService {
 	KeyValuesDTO create(String key, String value) throws Exception;
 	
 	/**
+	 * Crea una chiave associandovi come valore una lista a null, 
+	 * risolve l'ambiguità tra {@link #create(String, List)} e 
+	 * {@link #create(String, String)} se si vuole passare un null, 
+	 * si comporta come se si passasse null a {@link #create(String, List)}
+	 * @param  la chiave da associare a una lista null di valori
+	 * @return un oggetto contenente la chiave con la lista di valori a null
+	 * @throws Exception  in caso di errori
+	 */
+	KeyValuesDTO createNullList(String key) throws Exception;
+	
+	
+	/**
+	 * Crea una chiave associandovi come valore una lista a null, 
+	 * risolve l'ambiguità tra {@link #create(String, List)} e 
+	 * {@link #create(String, String)} se si vuole passare un null, 
+	 * si comporta come se si passasse null a {@link #create(String, String)}
+	 * @param  la chiave da associare a un valore null
+	 * @return un oggetto contenente la chiave con la lista contenente un solo valore a null
+	 * @throws Exception  in caso di errori
+	 */
+	KeyValuesDTO createNullString(String key) throws Exception;
+	
+	/**
 	 * Sostituisce i valori associati ad una chiave
 	 * @param key chiave
 	 * @param values  valori da associare
@@ -39,6 +64,29 @@ public interface IKeyValuesService {
 	 * @throws Exception in caso di errori, ad esempio di chiave non esistente
 	 */
 	KeyValuesDTO update(String key, String value) throws Exception;
+	
+	/**
+	 * Aggiorna una chiave associandovi come valore una lista a null, 
+	 * risolve l'ambiguità tra {@link #update(String, List)} e 
+	 * {@link #update(String, String)} se si vuole passare un null, 
+	 * si comporta come se si passasse null a {@link #update(String, List)}
+	 * @param  la chiave da associare a una lista null di valori
+	 * @return un oggetto contenente la chiave con la lista di valori a null
+	 * @throws Exception  in caso di errori
+	 */
+	KeyValuesDTO updateNullList(String key) throws Exception;
+	
+	
+	/**
+	 * Aggiorna una chiave associandovi come valore una lista a null, 
+	 * risolve l'ambiguità tra {@link #update(String, List)} e 
+	 * {@link #update(String, String)} se si vuole passare un null, 
+	 * si comporta come se si passasse null a {@link #update(String, String)}
+	 * @param  la chiave da associare a un valore null
+	 * @return un oggetto contenente la chiave con la lista contenente un solo valore a null
+	 * @throws Exception  in caso di errori
+	 */
+	KeyValuesDTO updateNullString(String key) throws Exception;
 	
 	/**
 	 * Fornisce tutte le chiavi e i valori ad esse associati
