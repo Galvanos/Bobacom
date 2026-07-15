@@ -1,5 +1,6 @@
 package com.bobacom.backend.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import jakarta.persistence.Column;
@@ -37,7 +38,7 @@ public class OperazioneMagazzino {
 	private Ingrediente ingrediente;
 	
 	@Column(name="delta_quantita")
-	private Float deltaQuantita;
+	private BigDecimal deltaQuantita;
 	
 	@Column
 	private String causale;

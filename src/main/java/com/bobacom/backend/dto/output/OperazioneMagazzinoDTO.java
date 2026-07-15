@@ -1,5 +1,7 @@
 package com.bobacom.backend.dto.output;
 
+import java.math.BigDecimal;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,7 +16,7 @@ import lombok.Setter;
 public class OperazioneMagazzinoDTO {
 	private Integer id;
 	private IngredienteDTO ingrediente;
-	private Float deltaQuantita;
+	private BigDecimal deltaQuantita;
 	private String causale;
 	private String data;
 }

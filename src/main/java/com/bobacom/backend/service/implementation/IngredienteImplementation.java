@@ -53,7 +53,8 @@ public class IngredienteImplementation implements IIngredienteService{
 	@Transactional
 	@Override
 	public void update(IngredienteRequest req) throws Exception{
-		Ingrediente ingrediente = ingredienteRepo.findById(req.getId()).orElseThrow(() -> new AcademyException("ingrediente non trovato;"));
+		Ingrediente ingrediente = ingredienteRepo.findById(req.getId()).orElseThrow(
+				() -> new AcademyException("ingrediente non trovato;"));
 		Optional.ofNullable(req.getIdCategoriaIngrediente())
 			.ifPresent(id -> categoriaRepo.findById(id)
 		        .ifPresentOrElse(ingrediente::setCategoriaIngrediente, () -> {

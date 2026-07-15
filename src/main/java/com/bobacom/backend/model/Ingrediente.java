@@ -1,5 +1,6 @@
 package com.bobacom.backend.model;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -39,7 +40,7 @@ public class Ingrediente {
 	private String descrizione;	// descrizione, principalmente per mostrarla in UI
 	
 	@Column(name="quantita_stock")
-	private Long quantitaStock;	//quantitá di pezzi in stock
+	private BigDecimal quantitaStock;	//quantitá di pezzi in stock
 	
 	@Column(name="sovraprezzo_aggiunta") 
 	private float sovraprezzoAggiunta; // il prezzo che sostiene il cliente quando aggiunge questo ingrediente al suo prodotto
