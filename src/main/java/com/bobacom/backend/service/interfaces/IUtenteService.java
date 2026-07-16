@@ -2,25 +2,33 @@ package com.bobacom.backend.service.interfaces;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
+
 import com.bobacom.backend.dto.input.AddCreditReq;
 import com.bobacom.backend.dto.input.UtenteReq;
 import com.bobacom.backend.dto.output.UtenteDTO;
 
 public interface IUtenteService {
 
+	
+	
 	/**
 	 * Create senza alcun vincolo, con controlli solo per funzionalità minima
-	 * @param req la richiesta di creazione
+	 * @param req la richiesta di creazione utente
+	 * @return l'utente appena creato
 	 * @throws Exception in caso di errore
 	 */
-	void create(UtenteReq req) throws Exception;
+	UtenteDTO create(UtenteReq req) throws Exception;
 	/**
 	 * Create da invocare quando un utente registra sé stesso, vengono fatti dei controlli
 	 * ed impostati dei valori (ad esempio il credito iniziale e il ruolo come utente)
 	 * @param req la richiesta di creazione utente
+	 * @return l'utente appena creato
+	 * @return 
 	 * @throws Exception in caso di errore
 	 */
-	void createByUser(UtenteReq req) throws Exception;
+	UtenteDTO createByUser(UtenteReq req) throws Exception;
+	
 	/**
 	 * Aggiornamento senza vincoli, da usare per gli admin
 	 * @param req la richiesta con l'update
@@ -28,12 +36,21 @@ public interface IUtenteService {
 	 */
 	void update(UtenteReq req) throws Exception;
 	/**
-	 * Aggiornamento da parte dell'utente, ad esempio non consente di aggiornare il credito
+	 * Aggiornamento da parte dell'utente, ad esempio non consente di aggiornare il credito,
+	 * verifica che l'utente che aggiorna sia l'utente stesso
 	 * @param req la richiesta con l'aggiornamento
 	 * @throws Exception in caso di errori
 	 */
 	void updateByUser(UtenteReq req) throws Exception;
 	UtenteDTO getById(Integer id) throws Exception;
+	/**
+	 * Informazioni riguardo l'utente accessibili solo all'utente stesso,
+	 * verifica che il richiedente sia lo stesso utente collegato
+	 * @param id
+	 * @return i dati dell'utente
+	 * @throws Exception
+	 */
+	UtenteDTO getByIdByUser(Integer id) throws Exception;
 	List<UtenteDTO> list() throws Exception;
 	void delete(Integer id) throws Exception;
 	

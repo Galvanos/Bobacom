@@ -1,12 +1,20 @@
 package com.bobacom.backend.service.implementation;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bobacom.backend.dto.input.AddCreditReq;
@@ -14,6 +22,7 @@ import com.bobacom.backend.dto.input.UtenteReq;
 import com.bobacom.backend.dto.output.UtenteDTO;
 import com.bobacom.backend.enums.Ruolo;
 import com.bobacom.backend.exceptions.AcademyException;
+import com.bobacom.backend.exceptions.ForbiddenException;
 import com.bobacom.backend.model.Utente;
 import com.bobacom.backend.repository.IUtenteRepository;
 import com.bobacom.backend.service.interfaces.IUtenteService;
@@ -21,11 +30,16 @@ import com.bobacom.backend.service.interfaces.IUtenteService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
+@Slf4j
 public class UtenteImplementation implements IUtenteService {
 
 	private final IUtenteRepository repository;
+	
+	private final PasswordEncoder getPasswordEncoder;
+	private final InMemoryUserDetailsManager inMemoryUserDetailsManager;
 	
 	
 	/**
@@ -50,33 +64,46 @@ public class UtenteImplementation implements IUtenteService {
 	
 	@Transactional
 	@Override
-	public void create(UtenteReq req) throws Exception {
+	public UtenteDTO create(UtenteReq req) throws Exception {
 		req.setId(null);
+		//impongo in creazione che abbia un role (user  se assente) visto che serve nela gestione utenti
+		req.setRuolo(Optional.ofNullable(req).map(UtenteReq::getRuolo).orElse(Ruolo.UTENTE));
 		req.setCredito(Optional.ofNullable(req).map(UtenteReq::getCredito).orElse(BigDecimal.ZERO));
 		boolean alreadyExistsUsername = repository.existsByUsername(req.getUsername());
 		if(alreadyExistsUsername) {
 			throw new AcademyException("username già esistente");
 		}
+		String encodedPassword = getPasswordEncoder.encode(req.getPassword());
 		Utente utente = Utente.builder()
 		      .credito(req.getCredito())
 		      .email(req.getEmail())
 		      .indirizzo(req.getIndirizzo())
-		      .password(req.getPassword())//TODO migliorare gestione della password usando il password encoder
+		      .password(encodedPassword)
 		      .ruolo(req.getRuolo())
 		      .username(req.getUsername())
 		      .build();
-		repository.save(utente);
-		
+		utente = repository.save(utente);
+		updateUtenteForAuthentication(req, encodedPassword);
+		return UtenteDTO.builder()
+				.credito(utente.getCredito())
+				.email(utente.getEmail())
+				.id(utente.getId())
+				.indirizzo(utente.getIndirizzo())
+				.password(utente.getPassword())//in caso verrà annullata nel rest controller
+				.ruolo(utente.getRuolo())
+				.username(utente.getUsername())
+				.build();
 	}
 	
 
 	@Override
-	public void createByUser(UtenteReq req) throws Exception {
+	public UtenteDTO createByUser(UtenteReq req) throws Exception {
 		req.setRuolo(Ruolo.UTENTE);
 		req.setCredito(creditoDefault);
-		create(req);
+		return create(req);
 	}
-
+	
+	
 	@Transactional
 	@Override
 	public void update(UtenteReq req) throws Exception {
@@ -88,7 +115,7 @@ public class UtenteImplementation implements IUtenteService {
 		String requestUsername = req.getUsername();
 		if(requestUsername != null) {
 			if(Objects.equals(requestUsername, storedUser.getUsername())) {
-				req.setUsername(null);//o username non cambia, quindi non modifico
+				req.setUsername(null);//lo username non cambia, quindi non modifico
 			}else {
 				boolean alreadyExistsUsername = repository.existsByUsername(requestUsername);
 				if(alreadyExistsUsername) {
@@ -99,17 +126,28 @@ public class UtenteImplementation implements IUtenteService {
 			}
 		}
 		
+		String encodedPassword = storedUser.getPassword();
+		
+		String password = req.getPassword();
+		if(password != null) {
+			encodedPassword = getPasswordEncoder.encode(password);
+			storedUser.setPassword(encodedPassword);
+		}
+		
 		Optional.ofNullable(req).map(UtenteReq::getCredito).ifPresent(storedUser::setCredito);
 		Optional.ofNullable(req).map(UtenteReq::getEmail).ifPresent(storedUser::setEmail);
 		Optional.ofNullable(req).map(UtenteReq::getIndirizzo).ifPresent(storedUser::setIndirizzo);
-		Optional.ofNullable(req).map(UtenteReq::getPassword).ifPresent(storedUser::setPassword);//TODO da gestire con password encoder
 		Optional.ofNullable(req).map(UtenteReq::getRuolo).ifPresent(storedUser::setRuolo);
 		
 		repository.save(storedUser);
+		
+		//TODO gestire eventuale cambio di username
+		updateUtenteForAuthentication(req, encodedPassword);
 	}
 	
 	@Override
 	public void updateByUser(UtenteReq req) throws Exception {
+		//TODO verificare che ad aggiornare sia l'utente stesso che invoca
 		req.setCredito(null);
 		req.setRuolo(null);
 		update(req);
@@ -142,7 +180,7 @@ public class UtenteImplementation implements IUtenteService {
 					.email(storedUser.getEmail())
 					.id(storedUser.getId())
 					.indirizzo(storedUser.getIndirizzo())
-					.password(storedUser.getPassword())//TODO da capire per la password anche perché in database sarà criptata, per ora la si tiene, in caso la si annulla nel rest controller
+					.password(storedUser.getPassword())//si tiene l'hash della password perché serve in creazione utenti inmemory, ma nel rest controller va annullata
 					.ruolo(storedUser.getRuolo())
 					.username(storedUser.getUsername())
 					.build()
@@ -192,8 +230,43 @@ public class UtenteImplementation implements IUtenteService {
 		// TODO da capire come fare il filtraggio per l'utente loggato
 		return addCredit(addCreditReq);
 	}
-	
-	
 
+
+	@Override
+	public UtenteDTO getByIdByUser(Integer id) throws Exception {
+		UtenteDTO storedUser = getById(id);
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if(authentication != null) {
+			if(authentication.isAuthenticated()) {
+				String username = authentication.getName();
+				Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+				boolean isAdmin = authorities.stream().map(t -> t.getAuthority()).anyMatch(t -> Objects.equals(t, "ROLE_"+Ruolo.ADMIN.name()));
+				boolean differentUsername = !Objects.equals(username, storedUser.getUsername());
+				if(!isAdmin && differentUsername) {
+					throw new ForbiddenException("utente non autorizzato");
+				}
+			}else {
+				//idealmente si dovrebbe mettere unauthorized anziché forbidden
+				throw new ForbiddenException("utente non autorizzato");
+			}
+		}
+		return storedUser;
+	}
+	
+	
+	public void updateUtenteForAuthentication(UtenteReq req, String encodedPassword) {
+		if (inMemoryUserDetailsManager.userExists(req.getUsername())) {
+			inMemoryUserDetailsManager.deleteUser(req.getUsername());
+			log.debug("utente {} deleted", req.getUsername());
+		}
+		encodedPassword = Optional.ofNullable(encodedPassword).orElse(getPasswordEncoder.encode(req.getPassword()));
+		inMemoryUserDetailsManager.createUser(User
+				.withUsername(req.getUsername())
+				.password(encodedPassword)
+				.roles(req.getRuolo().toString())
+				.build()
+				);
+		log.debug("User {} is created", req.getUsername());
+	}
 
 }

@@ -4,8 +4,12 @@ package com.bobacom.backend.exceptions;
  */
 public class AcademyException extends RuntimeException {
 
+	/**
+	 * Costruttore senza parametri, invoca solo il super, inserito per avere esplicitamente un costruttore 
+	 * senza parametri
+	 */
 	public AcademyException() {
-		
+		super();
 	}
 
 	/**
