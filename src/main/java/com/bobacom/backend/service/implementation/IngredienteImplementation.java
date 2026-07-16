@@ -1,5 +1,6 @@
 package com.bobacom.backend.service.implementation;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -39,7 +40,8 @@ public class IngredienteImplementation implements IIngredienteService{
 		Ingrediente ingrediente = Ingrediente.builder().nome(req.getNome())
 														.descrizione(req.getDescrizione())
 														.colore(req.getColore())
-														.quantitaStock(req.getQuantitaStock())
+														.quantitaStock(Optional.ofNullable(
+																req.getQuantitaStock()).orElse(BigDecimal.ZERO))
 														.sovraprezzoAggiunta(req.getSovraprezzoAggiunta())
 														.prezzoRestock(req.getPrezzoRestock())
 														.categoriaIngrediente(categoria)
