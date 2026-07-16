@@ -1,9 +1,7 @@
 package com.bobacom.backend.dto.input;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
-import com.bobacom.backend.enums.StatoSpedizione;
 import com.bobacom.backend.model.Utente;
 
 import lombok.AllArgsConstructor;
@@ -19,9 +17,9 @@ import lombok.Setter;
 @AllArgsConstructor
 public class OrdineRequest {
     private Integer id;
-	private Utente utente;
+	private Integer utente_id;
 	private BigDecimal prezzoTotale;
-	private StatoSpedizione status;
-	private LocalDate dataCreazione;
+	private String status;
+	private String dataCreazione;
 	private String indirizzoDestinazione;
 }

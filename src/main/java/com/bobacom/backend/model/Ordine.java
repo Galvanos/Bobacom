@@ -37,20 +37,21 @@ public class Ordine {
 	@ManyToOne()
 	@JoinColumn(
 			name="id_utente",
-			foreignKey = @ForeignKey(name="fk_ordine_utente")
+			foreignKey = @ForeignKey(name="fk_ordine_utente"),
+			nullable = false
 			)
 	private Utente utente;
 	
-	@Column(name="prezzo_totale")
+	@Column(name="prezzo_totale", nullable = false)
 	private BigDecimal prezzoTotale;
 	
 	@Enumerated(EnumType.STRING)
-	@Column
+	@Column(nullable = false)
 	private StatoSpedizione status;
 	
-	@Column(name="data_creazione")
+	@Column(name="data_creazione", nullable = false)
 	private LocalDate dataCreazione;
 	
-	@Column(name="indirizzo_destinazione")
+	@Column(name="indirizzo_destinazione", nullable = false)
 	private String indirizzoDestinazione;
 }
