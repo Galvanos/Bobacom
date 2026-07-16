@@ -1,6 +1,8 @@
 package com.bobacom.backend.model;
 
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,7 +40,7 @@ public class Ingrediente {
 	private String descrizione;	// descrizione, principalmente per mostrarla in UI
 	
 	@Column(name="quantita_stock")
-	private Long quantitaStock;	//quantitá di pezzi in stock
+	private BigDecimal quantitaStock;	//quantitá di pezzi in stock
 	
 	@Column(name="sovraprezzo_aggiunta") 
 	private float sovraprezzoAggiunta; // il prezzo che sostiene il cliente quando aggiunge questo ingrediente al suo prodotto
@@ -49,14 +51,29 @@ public class Ingrediente {
 	@Column
 	private String colore; // pensato per il seguente utilizzo nella UI
 	
+	@Builder.Default
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(
 			name="ingrediente_allergeni",
 			joinColumns = @JoinColumn (name = "ingrediente_id" ),
 			inverseJoinColumns = @JoinColumn (name = "allergene_id"))
-	List<Allergeni> allergeni;	// lista allergeni, gli oggetti contengono nome e icona da usare in UI
+	Set<Allergeni> allergeni = new HashSet<>();	// lista allergeni, gli oggetti contengono nome e icona da usare in UI
 	
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name="categoria_id")
 	private CategoriaIngrediente categoriaIngrediente;	// categoria, aka in che sezione della ui composizione prodotto 
-}														// vogliamo inserirlo, es: thé, succo, latte, topping, etc
+														// vogliamo inserirlo, es: thé, succo, latte, topping, etc
+
+    public void addAllergene(Allergeni allergene) {
+        this.allergeni.add(allergene);
+    }
+
+    public void removeAllergene(Allergeni allergene) {
+        this.allergeni.remove(allergene);
+    }
+
+    // Standard getters and setters (DO NOT write a setter for 'tags' that replaces the Set!)
+    public Set<Allergeni> getAllergeni() {
+        return allergeni;
+    }
+}														
