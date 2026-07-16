@@ -1,6 +1,9 @@
 package com.bobacom.backend.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.Collections;
+import java.util.List;
 
 import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
@@ -46,19 +49,18 @@ public class TestKeyValuesService {
 		Assertions.assertThat(createdDoubleDTO.getValues().size()).isEqualTo(2);
 
 	}
-	
+
 	@Order(2)
 	@Test
 	void createNullValuesTest() throws Exception {
-		
+
 		KeyValuesDTO createdNullListDto = keyValuesService.createNullList("null_list");
 
 		Assertions.assertThat(createdNullListDto).isNotNull();
 		Assertions.assertThat(createdNullListDto.getKey()).isEqualTo("null_list");
 		Assertions.assertThat(createdNullListDto.getValue()).isEqualTo(null);
 		Assertions.assertThat(createdNullListDto.getValues()).isNull();
-		
-		
+
 		KeyValuesDTO createdNullStringDto = keyValuesService.createNullString("null_string");
 
 		Assertions.assertThat(createdNullStringDto).isNotNull();
@@ -66,15 +68,14 @@ public class TestKeyValuesService {
 		Assertions.assertThat(createdNullStringDto.getValue()).isEqualTo(null);
 		Assertions.assertThat(createdNullStringDto.getValues().size()).isEqualTo(1);
 		Assertions.assertThat(createdNullStringDto.getValues()).isEqualTo(Collections.singletonList(null));
-		
-		KeyValuesDTO createdEmptyListDto = keyValuesService.create("empty_list",Collections.emptyList());
+
+		KeyValuesDTO createdEmptyListDto = keyValuesService.createEmptyList("empty_list");
 
 		Assertions.assertThat(createdEmptyListDto).isNotNull();
 		Assertions.assertThat(createdEmptyListDto.getKey()).isEqualTo("empty_list");
 		Assertions.assertThat(createdEmptyListDto.getValue()).isEqualTo(null);
 		Assertions.assertThat(createdEmptyListDto.getValues().size()).isEqualTo(0);
 		Assertions.assertThat(createdEmptyListDto.getValues()).isEqualTo(Collections.emptyList());
-		
 
 		KeyValuesDTO createdDoubleSecondNullDTO = keyValuesService.create("null_secondo", Lists.list("primo", null));
 
@@ -83,8 +84,7 @@ public class TestKeyValuesService {
 		Assertions.assertThat(createdDoubleSecondNullDTO.getValue()).isEqualTo("primo");
 		Assertions.assertThat(createdDoubleSecondNullDTO.getValues()).isEqualTo(Lists.list("primo", null));
 		Assertions.assertThat(createdDoubleSecondNullDTO.getValues().size()).isEqualTo(2);
-		
-		
+
 		KeyValuesDTO createdDoubleFirstNullDTO = keyValuesService.create("null_primo", Lists.list(null, "secondo"));
 
 		Assertions.assertThat(createdDoubleFirstNullDTO).isNotNull();
@@ -92,7 +92,7 @@ public class TestKeyValuesService {
 		Assertions.assertThat(createdDoubleFirstNullDTO.getValue()).isNull();
 		Assertions.assertThat(createdDoubleFirstNullDTO.getValues()).isEqualTo(Lists.list(null, "secondo"));
 		Assertions.assertThat(createdDoubleFirstNullDTO.getValues().size()).isEqualTo(2);
-		
+
 		KeyValuesDTO createdDoubleBothNullDTO = keyValuesService.create("null_entrambi", Lists.list(null, null));
 
 		Assertions.assertThat(createdDoubleBothNullDTO).isNotNull();
@@ -129,8 +129,7 @@ public class TestKeyValuesService {
 			keyValuesService.create("chiave_doppia", Lists.list("ancora", "duplicata"));
 		}).isInstanceOf(AcademyException.class).hasMessage("Chiave chiave_doppia già esistente");
 	}
-	
-	
+
 	@Order(4)
 	@Test
 	void createNullKeyTest() throws Exception {
@@ -138,7 +137,6 @@ public class TestKeyValuesService {
 			keyValuesService.create(null, Lists.list("ancora", "duplicata"));
 		}).isInstanceOf(AcademyException.class).hasMessage("La chiave non può essere null");
 	}
-	
 
 	@Order(5)
 	@Test
@@ -242,17 +240,17 @@ public class TestKeyValuesService {
 		Assertions.assertThat(readDoppiaDTO.getValues())
 				.isEqualTo(Lists.list("prima aggiornata", "secondo aggiornato"));
 		Assertions.assertThat(readDoppiaDTO.getValues().size()).isEqualTo(2);
-		
-		//adesso si provano ad inserire più valori nella singola e un valore solo nella doppia
-		
-		
-		KeyValuesDTO updatedTriplaInSingolaDTO = keyValuesService.update("chiave_singola", Lists.list("tripla","in","singola"));
+
+		// adesso si provano ad inserire più valori nella singola e un valore solo nella
+		// doppia
+
+		KeyValuesDTO updatedTriplaInSingolaDTO = keyValuesService.update("chiave_singola",
+				Lists.list("tripla", "in", "singola"));
 
 		Assertions.assertThat(updatedTriplaInSingolaDTO).isNotNull();
 		Assertions.assertThat(updatedTriplaInSingolaDTO.getKey()).isEqualTo("chiave_singola");
 		Assertions.assertThat(updatedTriplaInSingolaDTO.getValue()).isEqualTo("tripla");
-		Assertions.assertThat(updatedTriplaInSingolaDTO.getValues())
-		.isEqualTo( Lists.list("tripla","in","singola"));
+		Assertions.assertThat(updatedTriplaInSingolaDTO.getValues()).isEqualTo(Lists.list("tripla", "in", "singola"));
 		Assertions.assertThat(updatedTriplaInSingolaDTO.getValues().size()).isEqualTo(3);
 
 		// verifico una lettura dopo l'aggiornamento
@@ -261,13 +259,10 @@ public class TestKeyValuesService {
 		Assertions.assertThat(readTriplaInSingolaDTO).isNotNull();
 		Assertions.assertThat(readTriplaInSingolaDTO.getKey()).isEqualTo("chiave_singola");
 		Assertions.assertThat(readTriplaInSingolaDTO.getValue()).isEqualTo("tripla");
-		Assertions.assertThat(readTriplaInSingolaDTO.getValues())
-		.isEqualTo( Lists.list("tripla","in","singola"));
+		Assertions.assertThat(readTriplaInSingolaDTO.getValues()).isEqualTo(Lists.list("tripla", "in", "singola"));
 		Assertions.assertThat(readTriplaInSingolaDTO.getValues().size()).isEqualTo(3);
 
-		
-		KeyValuesDTO updatedSingolaInDoppiaDTO = keyValuesService.update("chiave_doppia",
-				"Singola in doppia");
+		KeyValuesDTO updatedSingolaInDoppiaDTO = keyValuesService.update("chiave_doppia", "Singola in doppia");
 
 		Assertions.assertThat(updatedSingolaInDoppiaDTO).isNotNull();
 		Assertions.assertThat(updatedSingolaInDoppiaDTO.getKey()).isEqualTo("chiave_doppia");
@@ -283,7 +278,7 @@ public class TestKeyValuesService {
 		Assertions.assertThat(readSingolaInDoppiaDTO.getValues().size()).isEqualTo(1);
 
 	}
-	
+
 	@Order(8)
 	@Test
 	void updateNotExistingTest() throws Exception {
@@ -298,8 +293,7 @@ public class TestKeyValuesService {
 			keyValuesService.update("inesistente", "deve fallire");
 		}).isInstanceOf(AcademyException.class).hasMessage("Chiave inesistente non trovata");
 	}
-	
-	
+
 	@Order(9)
 	@Test
 	void updateNullValuesTest() throws Exception {
@@ -310,7 +304,7 @@ public class TestKeyValuesService {
 		Assertions.assertThat(createdDto.getValue()).isEqualTo("singola");
 		Assertions.assertThat(createdDto.getValues().size()).isEqualTo(1);
 
-		//aggiorno mettendo la list a null
+		// aggiorno mettendo la list a null
 		KeyValuesDTO updatedNullListDTO = keyValuesService.updateNullList("chiave_singola");
 
 		Assertions.assertThat(updatedNullListDTO).isNotNull();
@@ -325,8 +319,8 @@ public class TestKeyValuesService {
 		Assertions.assertThat(readNullListDTO.getKey()).isEqualTo("chiave_singola");
 		Assertions.assertThat(readNullListDTO.getValue()).isNull();
 		Assertions.assertThat(readNullListDTO.getValues()).isNull();
-		
-		//aggiorno mettendo la string a null
+
+		// aggiorno mettendo la string a null
 		KeyValuesDTO updatedNullStringDTO = keyValuesService.updateNullString("chiave_singola");
 
 		Assertions.assertThat(updatedNullStringDTO).isNotNull();
@@ -343,9 +337,9 @@ public class TestKeyValuesService {
 		Assertions.assertThat(readNullStringDTO.getValue()).isNull();
 		Assertions.assertThat(readNullStringDTO.getValues().size()).isEqualTo(1);
 		Assertions.assertThat(readNullStringDTO.getValues()).isEqualTo(Collections.singletonList(null));
-		
+
 		// aggiorno mettendo una lista vuota
-		KeyValuesDTO updatedEmptyListDTO = keyValuesService.update("chiave_singola",Collections.emptyList());
+		KeyValuesDTO updatedEmptyListDTO = keyValuesService.updateEmptyList("chiave_singola");
 
 		Assertions.assertThat(updatedEmptyListDTO).isNotNull();
 		Assertions.assertThat(updatedEmptyListDTO.getKey()).isEqualTo("chiave_singola");
@@ -362,7 +356,6 @@ public class TestKeyValuesService {
 		Assertions.assertThat(readEmptyListDTO.getValues().size()).isEqualTo(0);
 		Assertions.assertThat(readEmptyListDTO.getValues()).isEqualTo(Collections.emptyList());
 
-
 		KeyValuesDTO createdDoubleDTO = keyValuesService.create("chiave_doppia", Lists.list("primo", "secondo"));
 
 		Assertions.assertThat(createdDoubleDTO).isNotNull();
@@ -371,15 +364,14 @@ public class TestKeyValuesService {
 		Assertions.assertThat(createdDoubleDTO.getValues()).isEqualTo(Lists.list("primo", "secondo"));
 		Assertions.assertThat(createdDoubleDTO.getValues().size()).isEqualTo(2);
 
-		//aggiorno mettendo il primo valore a null
+		// aggiorno mettendo il primo valore a null
 		KeyValuesDTO updatedDoppiaFirstNullDTO = keyValuesService.update("chiave_doppia",
 				Lists.list(null, "secondo aggiornato"));
 
 		Assertions.assertThat(updatedDoppiaFirstNullDTO).isNotNull();
 		Assertions.assertThat(updatedDoppiaFirstNullDTO.getKey()).isEqualTo("chiave_doppia");
 		Assertions.assertThat(updatedDoppiaFirstNullDTO.getValue()).isEqualTo(null);
-		Assertions.assertThat(updatedDoppiaFirstNullDTO.getValues())
-				.isEqualTo(Lists.list(null, "secondo aggiornato"));
+		Assertions.assertThat(updatedDoppiaFirstNullDTO.getValues()).isEqualTo(Lists.list(null, "secondo aggiornato"));
 		Assertions.assertThat(updatedDoppiaFirstNullDTO.getValues().size()).isEqualTo(2);
 
 		// verifico una lettura dopo l'aggiornamento
@@ -388,52 +380,144 @@ public class TestKeyValuesService {
 		Assertions.assertThat(readDoppiaFirstNullDTO).isNotNull();
 		Assertions.assertThat(readDoppiaFirstNullDTO.getKey()).isEqualTo("chiave_doppia");
 		Assertions.assertThat(readDoppiaFirstNullDTO.getValue()).isNull();
-		Assertions.assertThat(readDoppiaFirstNullDTO.getValues())
-				.isEqualTo(Lists.list(null, "secondo aggiornato"));
+		Assertions.assertThat(readDoppiaFirstNullDTO.getValues()).isEqualTo(Lists.list(null, "secondo aggiornato"));
 		Assertions.assertThat(readDoppiaFirstNullDTO.getValues().size()).isEqualTo(2);
-		//TODO riprendere qui
-		
-		//adesso si provano ad inserire più valori nella singola e un valore solo nella doppia
-		
-		
-		KeyValuesDTO updatedTriplaInSingolaDTO = keyValuesService.update("chiave_singola", Lists.list("tripla","in","singola"));
 
-		Assertions.assertThat(updatedTriplaInSingolaDTO).isNotNull();
-		Assertions.assertThat(updatedTriplaInSingolaDTO.getKey()).isEqualTo("chiave_singola");
-		Assertions.assertThat(updatedTriplaInSingolaDTO.getValue()).isEqualTo("tripla");
-		Assertions.assertThat(updatedTriplaInSingolaDTO.getValues())
-		.isEqualTo( Lists.list("tripla","in","singola"));
-		Assertions.assertThat(updatedTriplaInSingolaDTO.getValues().size()).isEqualTo(3);
+		// aggiorno mettendo il secondo valore a null
+		KeyValuesDTO updatedDoppiaSecondNullDTO = keyValuesService.update("chiave_doppia",
+				Lists.list("primo aggiornato", null));
+
+		Assertions.assertThat(updatedDoppiaSecondNullDTO).isNotNull();
+		Assertions.assertThat(updatedDoppiaSecondNullDTO.getKey()).isEqualTo("chiave_doppia");
+		Assertions.assertThat(updatedDoppiaSecondNullDTO.getValue()).isEqualTo("primo aggiornato");
+		Assertions.assertThat(updatedDoppiaSecondNullDTO.getValues()).isEqualTo(Lists.list("primo aggiornato", null));
+		Assertions.assertThat(updatedDoppiaSecondNullDTO.getValues().size()).isEqualTo(2);
 
 		// verifico una lettura dopo l'aggiornamento
-		KeyValuesDTO readTriplaInSingolaDTO = keyValuesService.read("chiave_singola");
+		KeyValuesDTO readDoppiaSecondNullDTO = keyValuesService.read("chiave_doppia");
 
-		Assertions.assertThat(readTriplaInSingolaDTO).isNotNull();
-		Assertions.assertThat(readTriplaInSingolaDTO.getKey()).isEqualTo("chiave_singola");
-		Assertions.assertThat(readTriplaInSingolaDTO.getValue()).isEqualTo("tripla");
-		Assertions.assertThat(readTriplaInSingolaDTO.getValues())
-		.isEqualTo( Lists.list("tripla","in","singola"));
-		Assertions.assertThat(readTriplaInSingolaDTO.getValues().size()).isEqualTo(3);
+		Assertions.assertThat(readDoppiaSecondNullDTO).isNotNull();
+		Assertions.assertThat(readDoppiaSecondNullDTO.getKey()).isEqualTo("chiave_doppia");
+		Assertions.assertThat(readDoppiaSecondNullDTO.getValue()).isEqualTo("primo aggiornato");
+		Assertions.assertThat(readDoppiaSecondNullDTO.getValues()).isEqualTo(Lists.list("primo aggiornato", null));
+		Assertions.assertThat(readDoppiaSecondNullDTO.getValues().size()).isEqualTo(2);
 
-		
-		KeyValuesDTO updatedSingolaInDoppiaDTO = keyValuesService.update("chiave_doppia",
-				"Singola in doppia");
+		// aggiorno mettendo entrambi i valori a null
+		KeyValuesDTO updatedDoppiaBothNullDTO = keyValuesService.update("chiave_doppia", Lists.list(null, null));
 
-		Assertions.assertThat(updatedSingolaInDoppiaDTO).isNotNull();
-		Assertions.assertThat(updatedSingolaInDoppiaDTO.getKey()).isEqualTo("chiave_doppia");
-		Assertions.assertThat(updatedSingolaInDoppiaDTO.getValue()).isEqualTo("Singola in doppia");
-		Assertions.assertThat(updatedSingolaInDoppiaDTO.getValues().size()).isEqualTo(1);
+		Assertions.assertThat(updatedDoppiaBothNullDTO).isNotNull();
+		Assertions.assertThat(updatedDoppiaBothNullDTO.getKey()).isEqualTo("chiave_doppia");
+		Assertions.assertThat(updatedDoppiaBothNullDTO.getValue()).isEqualTo(null);
+		Assertions.assertThat(updatedDoppiaBothNullDTO.getValues()).isEqualTo(Lists.list(null, null));
+		Assertions.assertThat(updatedDoppiaBothNullDTO.getValues().size()).isEqualTo(2);
 
 		// verifico una lettura dopo l'aggiornamento
-		KeyValuesDTO readSingolaInDoppiaDTO = keyValuesService.read("chiave_doppia");
+		KeyValuesDTO readDoppiaBothNullDTO = keyValuesService.read("chiave_doppia");
 
-		Assertions.assertThat(readSingolaInDoppiaDTO).isNotNull();
-		Assertions.assertThat(readSingolaInDoppiaDTO.getKey()).isEqualTo("chiave_doppia");
-		Assertions.assertThat(readSingolaInDoppiaDTO.getValue()).isEqualTo("Singola in doppia");
-		Assertions.assertThat(readSingolaInDoppiaDTO.getValues().size()).isEqualTo(1);
+		Assertions.assertThat(readDoppiaBothNullDTO).isNotNull();
+		Assertions.assertThat(readDoppiaBothNullDTO.getKey()).isEqualTo("chiave_doppia");
+		Assertions.assertThat(readDoppiaBothNullDTO.getValue()).isNull();
+		;
+		Assertions.assertThat(readDoppiaBothNullDTO.getValues()).isEqualTo(Lists.list(null, null));
+		Assertions.assertThat(readDoppiaBothNullDTO.getValues().size()).isEqualTo(2);
+	}
+
+	@Order(10)
+	@Test
+	void updateNullKeyTest() throws Exception {
+
+		KeyValuesDTO createdDto = keyValuesService.create("chiave_singola", "singola");
+
+		Assertions.assertThat(createdDto).isNotNull();
+		Assertions.assertThat(createdDto.getKey()).isEqualTo("chiave_singola");
+		Assertions.assertThat(createdDto.getValue()).isEqualTo("singola");
+		Assertions.assertThat(createdDto.getValues().size()).isEqualTo(1);
+
+		Assertions.assertThatThrownBy(() -> {
+			keyValuesService.update(null, Lists.list("ancora", "duplicata"));
+		}).isInstanceOf(AcademyException.class).hasMessage("La chiave non può essere null");
+
+	}
+
+	@Order(11)
+	@Test
+	void listTest() throws Exception {
+
+		keyValuesService.create("aaa", "prima");
+		keyValuesService.create("zzz", "ultima");
+		keyValuesService.create("bbb", "seconda");
+
+		// si verifica se la list è ordinata come richiesto
+		List<KeyValuesDTO> list = keyValuesService.list();
+
+		List<String> keys = list.stream().map(t -> t.getKey()).toList();
+
+		Assertions.assertThat(keys).isEqualTo(Lists.list("aaa", "bbb", "zzz"));
+
+		List<String> values = list.stream().map(t -> t.getValue()).toList();
+
+		Assertions.assertThat(values).isEqualTo(Lists.list("prima", "seconda", "ultima"));
+
+	}
+
+	@Order(12)
+	@Test
+	void existsTest() throws Exception {
+
+		keyValuesService.create("aaa", "prima");
+
+		boolean existing = keyValuesService.existsKey("aaa");
+
+		assertThat(existing).isEqualTo(true);
+
+		boolean notExisting = keyValuesService.existsKey("inesistente");
+
+		assertThat(notExisting).isEqualTo(false);
+		
+		Assertions.assertThatThrownBy(() -> {
+			keyValuesService.existsKey(null);
+		}).isInstanceOf(AcademyException.class).hasMessage("La chiave non può essere null");
+	}
+
+	@Order(13)
+	@Test
+	void deleteTest() throws Exception {
+
+		keyValuesService.create("aaa", "prima");
+
+		// cancello una chiave esistente
+		keyValuesService.delete("aaa");
+
+		// la cancello di nuovo, mi aspetto che lanci eccezione
+		Assertions.assertThatThrownBy(() -> {
+			keyValuesService.delete("aaa");
+		}).isInstanceOf(AcademyException.class).hasMessage("Chiave aaa non trovata");
+
+		// cancello una chiave che non è mai esistita, mi aspetto vada in eccezione
+		Assertions.assertThatThrownBy(() -> {
+			keyValuesService.delete("inesistente");
+		}).isInstanceOf(AcademyException.class).hasMessage("Chiave inesistente non trovata");
+
+		// cancello una chiave null, mi aspetto vada in eccezione
+		Assertions.assertThatThrownBy(() -> {
+			keyValuesService.delete(null);
+		}).isInstanceOf(AcademyException.class).hasMessage("La chiave non può essere null");
 
 	}
 	
-	
+	@Order(14)
+	@Test
+	void readNullTest() throws Exception {
+		KeyValuesDTO createdDto = keyValuesService.create("chiave_singola", "singola");
+
+		Assertions.assertThat(createdDto).isNotNull();
+		Assertions.assertThat(createdDto.getKey()).isEqualTo("chiave_singola");
+		Assertions.assertThat(createdDto.getValue()).isEqualTo("singola");
+		Assertions.assertThat(createdDto.getValues().size()).isEqualTo(1);
+
+		Assertions.assertThatThrownBy(() -> {
+			keyValuesService.read(null);
+		}).isInstanceOf(AcademyException.class).hasMessage("La chiave non può essere null");
+	}
 
 }

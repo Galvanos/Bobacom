@@ -30,6 +30,8 @@ public class KeyValuesDTO {
 	
 	/**
 	 * Valori associati alla chiave
+	 * <br/>
+	 * <strong>Attenzione: non viene data alcuna garanzia se la lista fornita sia mutabile o meno</strong>
 	 */
 	private List<String> values;
 	

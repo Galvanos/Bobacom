@@ -29,24 +29,38 @@ public interface IKeyValuesService {
 	 * Crea una chiave associandovi come valore una lista a null, 
 	 * risolve l'ambiguità tra {@link #create(String, List)} e 
 	 * {@link #create(String, String)} se si vuole passare un null, 
-	 * si comporta come se si passasse null a {@link #create(String, List)}
+	 * si comporta come se si passasse null a {@link #create(String, List)},
+	 * cioè nel valore ritornato si ha {@link KeyValuesDTO#getValue()} a null 
+	 * e {@link KeyValuesDTO#getValues()} a null
 	 * @param  la chiave da associare a una lista null di valori
 	 * @return un oggetto contenente la chiave con la lista di valori a null
 	 * @throws Exception  in caso di errori
 	 */
 	KeyValuesDTO createNullList(String key) throws Exception;
 	
+	/**
+	 * Crea una chiave associandovi come valore una lista vuota, 
+	 * nel valore ritornato si ha {@link KeyValuesDTO#getValue()} a null 
+	 * e {@link KeyValuesDTO#getValues()} una lista vuota
+	 * @param  la chiave da associare a una lista vuota di valori
+	 * @return un oggetto contenente la chiave con la lista di valori vuota
+	 * @throws Exception  in caso di errori
+	 */
+	KeyValuesDTO createEmptyList(String key) throws Exception;
 	
 	/**
 	 * Crea una chiave associandovi come valore una lista a null, 
 	 * risolve l'ambiguità tra {@link #create(String, List)} e 
 	 * {@link #create(String, String)} se si vuole passare un null, 
-	 * si comporta come se si passasse null a {@link #create(String, String)}
+	 * si comporta come se si passasse null a {@link #create(String, String)},
+	 * cioè nel valore ritornato si ha {@link KeyValuesDTO#getValue()} a null 
+	 * e {@link KeyValuesDTO#getValues()} con un solo valore al suo interno a null
 	 * @param  la chiave da associare a un valore null
 	 * @return un oggetto contenente la chiave con la lista contenente un solo valore a null
 	 * @throws Exception  in caso di errori
 	 */
 	KeyValuesDTO createNullString(String key) throws Exception;
+	
 	
 	/**
 	 * Sostituisce i valori associati ad una chiave
@@ -69,19 +83,32 @@ public interface IKeyValuesService {
 	 * Aggiorna una chiave associandovi come valore una lista a null, 
 	 * risolve l'ambiguità tra {@link #update(String, List)} e 
 	 * {@link #update(String, String)} se si vuole passare un null, 
-	 * si comporta come se si passasse null a {@link #update(String, List)}
+	 * si comporta come se si passasse null a {@link #update(String, List)},
+	 * cioè nel valore ritornato si ha {@link KeyValuesDTO#getValue()} a null 
+	 * e {@link KeyValuesDTO#getValues()} a null
 	 * @param  la chiave da associare a una lista null di valori
 	 * @return un oggetto contenente la chiave con la lista di valori a null
 	 * @throws Exception  in caso di errori
 	 */
 	KeyValuesDTO updateNullList(String key) throws Exception;
 	
+	/**
+	 * Aggiorna una chiave associandovi come valore una lista vuota, 
+	 * nel valore ritornato si ha {@link KeyValuesDTO#getValue()} a null 
+	 * e {@link KeyValuesDTO#getValues()} una lista vuota
+	 * @param  la chiave da associare a una lista vuota di valori
+	 * @return un oggetto contenente la chiave con la lista di valori vuota
+	 * @throws Exception  in caso di errori
+	 */
+	KeyValuesDTO updateEmptyList(String key) throws Exception;
 	
 	/**
 	 * Aggiorna una chiave associandovi come valore una lista a null, 
 	 * risolve l'ambiguità tra {@link #update(String, List)} e 
 	 * {@link #update(String, String)} se si vuole passare un null, 
-	 * si comporta come se si passasse null a {@link #update(String, String)}
+	 * si comporta come se si passasse null a {@link #update(String, String)},
+	 * cioè nel valore ritornato si ha {@link KeyValuesDTO#getValue()} a null 
+	 * e {@link KeyValuesDTO#getValues()} con un solo valore al suo interno a null
 	 * @param  la chiave da associare a un valore null
 	 * @return un oggetto contenente la chiave con la lista contenente un solo valore a null
 	 * @throws Exception  in caso di errori
@@ -115,7 +142,7 @@ public interface IKeyValuesService {
 	 * Verifica se un chiave è già memorizzata
 	 * @param key la chiave da verificare
 	 * @return true se già memorizzata, false altrimenti
-	 * @throws Exception in caso di errori
+	 * @throws Exception in caso di errori, ad esempio per chiave null
 	 */
 	boolean existsKey(String key) throws Exception;
 

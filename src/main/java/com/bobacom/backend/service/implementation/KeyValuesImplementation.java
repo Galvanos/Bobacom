@@ -104,6 +104,9 @@ public class KeyValuesImplementation implements IKeyValuesService {
 
 	@Override
 	public KeyValuesDTO read(String key) throws Exception {
+		if(key == null) {
+			throw new AcademyException("La chiave non può essere null");
+		}
 		KeyValues found = repository.findById(key).orElseThrow(() -> new AcademyException("Chiave "+key+" non trovata"));
 		return KeyValuesDTO.builder()
 				.key(found.getKey())
@@ -114,6 +117,9 @@ public class KeyValuesImplementation implements IKeyValuesService {
 	@Transactional
 	@Override
 	public KeyValuesDTO delete(String key) throws Exception {
+		if(key == null) {
+			throw new AcademyException("La chiave non può essere null");
+		}
 		KeyValues found = repository.findById(key).orElseThrow(() -> new AcademyException("Chiave "+key+" non trovata"));
 		repository.delete(found);
 		return KeyValuesDTO.builder()
@@ -124,6 +130,9 @@ public class KeyValuesImplementation implements IKeyValuesService {
 
 	@Override
 	public boolean existsKey(String key) throws Exception {
+		if(key == null) {
+			throw new AcademyException("La chiave non può essere null");
+		}
 		return repository.existsById(key);
 	}
 
@@ -146,5 +155,17 @@ public class KeyValuesImplementation implements IKeyValuesService {
 	public KeyValuesDTO updateNullString(String key) throws Exception {
 		return update(key, Collections.singletonList(null));
 	}
+
+	@Override
+	public KeyValuesDTO createEmptyList(String key) throws Exception {
+		return create(key, Collections.emptyList());
+	}
+
+	@Override
+	public KeyValuesDTO updateEmptyList(String key) throws Exception {
+		return update(key, Collections.emptyList());
+	}
+	
+	
 
 }
