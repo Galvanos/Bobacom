@@ -10,16 +10,18 @@ import com.bobacom.backend.exceptions.AcademyException;
 
 public class DateOperations {
 	private final static String PATTERN_DATE = "dd/MM/yyyy";
+	
+	public static String dateToString(LocalDate myDate) {
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(PATTERN_DATE, Locale.ITALIAN);		
+		return myDate.format(formatter);
+	}
 
 	public static String dateToString(LocalDateTime myDate) {
-		return dateToString(PATTERN_DATE,myDate);
-	}
-	public static String dateToString(String pattern, LocalDateTime myDate) {
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, Locale.ITALIAN);		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(PATTERN_DATE, Locale.ITALIAN);		
 		return myDate.format(formatter);
 	}
 	
-	public static LocalDate stringToDate(String input){
+	public static LocalDate stringToDate(String input) throws AcademyException{
 		LocalDate r = null;
 		try {
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern(PATTERN_DATE, Locale.ITALIAN);

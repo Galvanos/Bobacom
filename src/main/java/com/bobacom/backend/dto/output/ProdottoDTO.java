@@ -21,8 +21,8 @@ public class ProdottoDTO {
 	private String nome;
 	private String descrizione;
 	private String imgUrl;
-	List<TagProdotto> tag;
-	List<Promozione> promozione;
-	private List<Composizione> composizione;
+	List<TagProdottoDTO> tag;
+	List<PromozioneDTO> promozione;
+	private List<ComposizioneDTO> composizione;
 
 }

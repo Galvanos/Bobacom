@@ -1,5 +1,6 @@
 package com.bobacom.backend.dto.output;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -17,7 +18,7 @@ public class IngredienteDTO {
 	private Integer id;
 	private String nome;
 	private String descrizione;
-	private Long quantitaStock;
+	private BigDecimal quantitaStock;
 	private float sovraprezzoAggiunta;
 	private float prezzoRestock;
 	private String colore;

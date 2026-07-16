@@ -1,4 +1,4 @@
-package com.bobacom.backend.dto.input;
+package com.bobacom.backend.dto.output;
 
 import java.math.BigDecimal;
 
@@ -13,9 +13,10 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OperazioneMagazzinoRequest {
-	private Integer idIngrediente;	
+public class OperazioneMagazzinoDTO {
+	private Integer id;
+	private IngredienteDTO ingrediente;
 	private BigDecimal deltaQuantita;
-	private String causale;	
+	private String causale;
 	private String data;
 }
