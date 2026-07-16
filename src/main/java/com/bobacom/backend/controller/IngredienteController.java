@@ -1,6 +1,7 @@
 package com.bobacom.backend.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bobacom.backend.dto.input.IngredienteRequest;
+import com.bobacom.backend.dto.input.validation.ValidationGroups;
 import com.bobacom.backend.dto.output.ResponseDTO;
 import com.bobacom.backend.service.interfaces.IIngredienteService;
 
@@ -25,13 +27,13 @@ public class IngredienteController {
 	private final IIngredienteService ingredienteService;
 	
 	@PostMapping("create")
-	public ResponseEntity<ResponseDTO> create(@RequestBody (required=true) IngredienteRequest request) throws Exception{
+	public ResponseEntity<ResponseDTO> create(@RequestBody (required=true) @Validated(ValidationGroups.Create.class) IngredienteRequest request) throws Exception{
 		ingredienteService.create(request);
 		return ResponseEntity.ok(ResponseDTO.builder().msg("Ingrediente aggiunto").build());
 	}
 	
 	@PatchMapping("update")
-	public ResponseEntity<ResponseDTO> update(@RequestBody (required=true) IngredienteRequest request) throws Exception{
+	public ResponseEntity<ResponseDTO> update(@RequestBody (required=true) @Validated(ValidationGroups.Update.class) IngredienteRequest request) throws Exception{
 		ingredienteService.update(request);
 		return ResponseEntity.ok(ResponseDTO.builder().msg("Ingrediente modificato").build());
 	}
