@@ -79,8 +79,10 @@ public class IngredienteImplementation implements IIngredienteService{
 		ingredienteRepo.delete(ing);		
 	}
 	@Override
-	public List<IngredienteDTO> list() throws Exception {
-		return ingredienteRepo.findAll().stream().map(i -> IngredienteMap.buildIngredienteDTO(i)).collect(Collectors.toList());
+	public List<IngredienteDTO> list(Integer id, Integer categoriaId, BigDecimal maxAmount) throws Exception {
+		List<Ingrediente> ingredienteList = ingredienteRepo.searchByFilter(	id,	categoriaId, maxAmount);
+		
+		return ingredienteList.stream().map(i -> IngredienteMap.buildIngredienteDTO(i)).collect(Collectors.toList());
 	}
 	@Override
 	public IngredienteDTO getById(Integer id) throws Exception {

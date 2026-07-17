@@ -58,13 +58,13 @@ public class OperazioneMagazzinoImplementation implements IOperazioneMagazzinoSe
 												String dataMax,
 												String dataMin,
 												Boolean positivo) throws Exception {
-		log.debug("prima del sospetto");
+
 		List<OperazioneMagazzino> opList = operazioneRepo.searchByFilter(	id, 
 																			idIngrediente,
 																			DateOperations.stringToDate(dataMax), 
 																			DateOperations.stringToDate(dataMin),
 																			positivo);
-		log.debug("dopo del sospetto");
+
 		return opList.stream().map(o -> OperazioneMagazzinoMap.buildOperazioneMagazzinoDTO(o)).toList();
 	}
 
