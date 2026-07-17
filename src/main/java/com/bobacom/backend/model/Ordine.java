@@ -1,7 +1,7 @@
 package com.bobacom.backend.model;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.bobacom.backend.enums.StatoSpedizione;
 
@@ -50,7 +50,7 @@ public class Ordine {
 	private StatoSpedizione status;
 	
 	@Column(name="data_creazione", nullable = false)
-	private LocalDate dataCreazione;
+	private LocalDateTime dataCreazione;
 	
 	@Column(name="indirizzo_destinazione", nullable = false)
 	private String indirizzoDestinazione;

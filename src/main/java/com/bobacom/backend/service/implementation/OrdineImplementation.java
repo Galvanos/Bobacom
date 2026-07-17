@@ -1,5 +1,7 @@
 package com.bobacom.backend.service.implementation;
 
+import java.time.LocalDateTime;
+
 import org.springframework.stereotype.Service;
 
 import com.bobacom.backend.dto.input.OrdineRequest;
@@ -31,7 +33,7 @@ public class OrdineImplementation implements IOrdineService{
 				
 		Ordine ordine = Ordine.builder()
 				.prezzoTotale(req.getPrezzoTotale())
-				.dataCreazione(DateOperations.stringToDate(req.getDataCreazione()))
+				.dataCreazione(LocalDateTime.now())
 				.indirizzoDestinazione(req.getIndirizzoDestinazione())
 				.utente(utente)
 				.build();
