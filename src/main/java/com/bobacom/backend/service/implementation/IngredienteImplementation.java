@@ -82,6 +82,12 @@ public class IngredienteImplementation implements IIngredienteService{
 	public List<IngredienteDTO> list() throws Exception {
 		return ingredienteRepo.findAll().stream().map(i -> IngredienteMap.buildIngredienteDTO(i)).collect(Collectors.toList());
 	}
+	@Override
+	public IngredienteDTO getById(Integer id) throws Exception {
+		return  IngredienteMap.buildIngredienteDTO(ingredienteRepo.findById(id).orElseThrow(
+				() -> new AcademyException()));
+	}
+	
 	
 	
 }

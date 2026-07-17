@@ -10,4 +10,5 @@ public interface IIngredienteService {
 	void update(IngredienteRequest req) throws Exception;
 	void delete(Integer id) throws Exception;
 	List<IngredienteDTO> list() throws Exception;
+	IngredienteDTO getById(Integer id) throws Exception; 
 }
