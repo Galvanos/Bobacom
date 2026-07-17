@@ -1,5 +1,6 @@
 package com.bobacom.backend.service.implementation;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -52,8 +53,19 @@ public class OperazioneMagazzinoImplementation implements IOperazioneMagazzinoSe
 	}
 
 	@Override
-	public List<OperazioneMagazzinoDTO> list() throws Exception {
-		return operazioneRepo.findAll().stream().map(o -> OperazioneMagazzinoMap.buildOperazioneMagazzinoDTO(o)).toList();
+	public List<OperazioneMagazzinoDTO> find(	Integer id, 
+												Integer idIngrediente,
+												String dataMax,
+												String dataMin,
+												Boolean positivo) throws Exception {
+
+		List<OperazioneMagazzino> opList = operazioneRepo.searchByFilter(	id, 
+																			idIngrediente,
+																			DateOperations.stringToDate(dataMax), 
+																			DateOperations.stringToDate(dataMin),
+																			positivo);
+
+		return opList.stream().map(o -> OperazioneMagazzinoMap.buildOperazioneMagazzinoDTO(o)).toList();
 	}
 
 }

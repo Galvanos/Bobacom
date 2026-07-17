@@ -30,7 +30,7 @@ public class ProdottoController {
 		prodottoS.create(req);
 		return ResponseEntity.ok(ResponseDTO.builder()
 			.msg("created...")
-			.build());	
+			.build());
 	}
 	
 
