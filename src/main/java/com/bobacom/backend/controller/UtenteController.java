@@ -1,5 +1,7 @@
 package com.bobacom.backend.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,7 +14,6 @@ import com.bobacom.backend.dto.output.ResponseDTO;
 import com.bobacom.backend.dto.output.UtenteDTO;
 import com.bobacom.backend.service.interfaces.IUtenteService;
 
-import jakarta.servlet.ServletContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -59,6 +60,14 @@ public class UtenteController {
 		return ResponseEntity.ok(byId);
 	}
 	
+	
+	@GetMapping("/admin/list")
+	public  ResponseEntity<List<UtenteDTO>> list() throws Exception {
+		List<UtenteDTO> list = service.list();
+		//annullo le password visto che sarebbero solo degli hash
+		list = list.stream().map(t -> t.setPassword(null)).toList();
+		return ResponseEntity.ok(list);
+	}
 	
 	
 }

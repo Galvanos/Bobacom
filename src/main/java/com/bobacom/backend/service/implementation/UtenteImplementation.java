@@ -65,10 +65,13 @@ public class UtenteImplementation implements IUtenteService {
 	@Transactional
 	@Override
 	public UtenteDTO create(UtenteReq req) throws Exception {
-		req.setId(null);
-		//impongo in creazione che abbia un role (user  se assente) visto che serve nela gestione utenti
+		if(req == null) {
+			throw new AcademyException("utente non fornito");
+		}		
+		req.setId(null);//annullo un eventuale id utente visto che siamo in creazione
+		//impongo in creazione che abbia un role (user  se assente) visto che serve nella gestione utenti
 		req.setRuolo(Optional.ofNullable(req).map(UtenteReq::getRuolo).orElse(Ruolo.UTENTE));
-		req.setCredito(Optional.ofNullable(req).map(UtenteReq::getCredito).orElse(BigDecimal.ZERO));
+		req.setCredito(Optional.ofNullable(req).map(UtenteReq::getCredito).orElse(creditoDefault));
 		boolean alreadyExistsUsername = repository.existsByUsername(req.getUsername());
 		if(alreadyExistsUsername) {
 			throw new AcademyException("username già esistente");
@@ -83,7 +86,7 @@ public class UtenteImplementation implements IUtenteService {
 		      .username(req.getUsername())
 		      .build();
 		utente = repository.save(utente);
-		updateUtenteForAuthentication(req, encodedPassword);
+		updateUtenteForAuthentication(req, null, encodedPassword);
 		return UtenteDTO.builder()
 				.credito(utente.getCredito())
 				.email(utente.getEmail())
@@ -110,13 +113,16 @@ public class UtenteImplementation implements IUtenteService {
 		if(req == null) {
 			throw new AcademyException("utente non fornito");
 		}
-		Utente storedUser = repository.findById(req.getId())
+		Integer id = req.getId();
+		if(id == null) {
+			throw new AcademyException("id utente non fornito");
+		}
+		Utente storedUser = repository.findById(id)
 				.orElseThrow(() -> new AcademyException("utente non trovato"));
+		String formerUsername = storedUser.getUsername();
 		String requestUsername = req.getUsername();
 		if(requestUsername != null) {
-			if(Objects.equals(requestUsername, storedUser.getUsername())) {
-				req.setUsername(null);//lo username non cambia, quindi non modifico
-			}else {
+			if(!Objects.equals(requestUsername, formerUsername)) {
 				boolean alreadyExistsUsername = repository.existsByUsername(requestUsername);
 				if(alreadyExistsUsername) {
 					throw new AcademyException("username già esistente");
@@ -124,6 +130,9 @@ public class UtenteImplementation implements IUtenteService {
 					storedUser.setUsername(requestUsername);
 				}
 			}
+		}else {
+			//per updateUtenteForAuthentication devo forzare lo username
+			req.setUsername(formerUsername);
 		}
 		
 		String encodedPassword = storedUser.getPassword();
@@ -141,13 +150,32 @@ public class UtenteImplementation implements IUtenteService {
 		
 		repository.save(storedUser);
 		
-		//TODO gestire eventuale cambio di username
-		updateUtenteForAuthentication(req, encodedPassword);
+		updateUtenteForAuthentication(req, formerUsername, encodedPassword);
 	}
 	
 	@Override
 	public void updateByUser(UtenteReq req) throws Exception {
-		//TODO verificare che ad aggiornare sia l'utente stesso che invoca
+		Integer id = req.getId();
+		if(id == null) {
+			throw new AcademyException("id utente non fornito");
+		}
+		UtenteDTO storedUser = getById(id);
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if(authentication != null) {
+			if(authentication.isAuthenticated()) {
+				String username = authentication.getName();
+				Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+				boolean isAdmin = authorities.stream().map(t -> t.getAuthority()).anyMatch(t -> Objects.equals(t, "ROLE_"+Ruolo.ADMIN.name()));
+				boolean differentUsername = !Objects.equals(username, storedUser.getUsername());
+				if(!isAdmin && differentUsername) {
+					throw new ForbiddenException("utente non autorizzato");
+				}
+			}else {
+				//idealmente si dovrebbe mettere unauthorized anziché forbidden
+				throw new ForbiddenException("utente non autorizzato");
+			}
+		}
+		//annullo credito e ruolo che un utente non può cambiarsi
 		req.setCredito(null);
 		req.setRuolo(null);
 		update(req);
@@ -163,7 +191,7 @@ public class UtenteImplementation implements IUtenteService {
 				.email(storedUser.getEmail())
 				.id(storedUser.getId())
 				.indirizzo(storedUser.getIndirizzo())
-				.password(storedUser.getPassword())//TODO da capire per la password anche perché in database sarà criptata, per ora la si tiene, in caso la si annulla nel rest controller
+				.password(storedUser.getPassword())//si tiene l'hash della password per poter usare il risultato di questo metodo in altri contesti, sarà cura del restcontroller annullarla
 				.ruolo(storedUser.getRuolo())
 				.username(storedUser.getUsername())
 				.build();
@@ -218,7 +246,7 @@ public class UtenteImplementation implements IUtenteService {
 				.email(storedUser.getEmail())
 				.id(storedUser.getId())
 				.indirizzo(storedUser.getIndirizzo())
-				.password(storedUser.getPassword())//TODO da capire per la password anche perché in database sarà criptata, per ora la si tiene, in caso la si annulla nel rest controller
+				.password(storedUser.getPassword())//si tiene l'hash della password, sarà cura dei rest controller annullarla
 				.ruolo(storedUser.getRuolo())
 				.username(storedUser.getUsername())
 				.build();
@@ -253,13 +281,21 @@ public class UtenteImplementation implements IUtenteService {
 		return storedUser;
 	}
 	
-	
-	public void updateUtenteForAuthentication(UtenteReq req, String encodedPassword) {
-		if (inMemoryUserDetailsManager.userExists(req.getUsername())) {
-			inMemoryUserDetailsManager.deleteUser(req.getUsername());
+	/**
+	 * Aggiorna o crea le informazioni utente assiciate a {@link #inMemoryUserDetailsManager}
+	 * @param req la richiesta con i nuovi dati dell'utente
+	 * @param formerUsername nome utente precedente che verrà eventualmente eliminato, 
+	 *        se null lo prende da {@code req}{@link UtenteReq#getUsername()}
+	 * @param encodedPassword password codificata da inserire, 
+	 * 		  se null recupera {@code req}{@link UtenteReq#getPassword()} e la codifica usando {@link #getPasswordEncoder}
+	 */
+	public void updateUtenteForAuthentication(UtenteReq req, String formerUsername, String encodedPassword) {
+		formerUsername = Optional.ofNullable(formerUsername).orElse(req.getUsername());
+		if (inMemoryUserDetailsManager.userExists(formerUsername)) {
+			inMemoryUserDetailsManager.deleteUser(formerUsername);
 			log.debug("utente {} deleted", req.getUsername());
 		}
-		encodedPassword = Optional.ofNullable(encodedPassword).orElse(getPasswordEncoder.encode(req.getPassword()));
+		encodedPassword = Optional.ofNullable(encodedPassword).orElseGet(() -> getPasswordEncoder.encode(req.getPassword()));
 		inMemoryUserDetailsManager.createUser(User
 				.withUsername(req.getUsername())
 				.password(encodedPassword)
