@@ -22,6 +22,8 @@ public class DateOperations {
 	}
 	
 	public static LocalDate stringToDate(String input) throws AcademyException{
+		if(input == null)
+			return null;
 		LocalDate r = null;
 		try {
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern(PATTERN_DATE, Locale.ITALIAN);

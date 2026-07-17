@@ -1,5 +1,6 @@
 package com.bobacom.backend.service.implementation;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -39,7 +40,8 @@ public class IngredienteImplementation implements IIngredienteService{
 		Ingrediente ingrediente = Ingrediente.builder().nome(req.getNome())
 														.descrizione(req.getDescrizione())
 														.colore(req.getColore())
-														.quantitaStock(req.getQuantitaStock())
+														.quantitaStock(Optional.ofNullable(
+																req.getQuantitaStock()).orElse(BigDecimal.ZERO))
 														.sovraprezzoAggiunta(req.getSovraprezzoAggiunta())
 														.prezzoRestock(req.getPrezzoRestock())
 														.categoriaIngrediente(categoria)
@@ -77,9 +79,17 @@ public class IngredienteImplementation implements IIngredienteService{
 		ingredienteRepo.delete(ing);		
 	}
 	@Override
-	public List<IngredienteDTO> list() throws Exception {
-		return ingredienteRepo.findAll().stream().map(i -> IngredienteMap.buildIngredienteDTO(i)).collect(Collectors.toList());
+	public List<IngredienteDTO> list(Integer id, Integer categoriaId, BigDecimal maxAmount) throws Exception {
+		List<Ingrediente> ingredienteList = ingredienteRepo.searchByFilter(	id,	categoriaId, maxAmount);
+		
+		return ingredienteList.stream().map(i -> IngredienteMap.buildIngredienteDTO(i)).collect(Collectors.toList());
 	}
+	@Override
+	public IngredienteDTO getById(Integer id) throws Exception {
+		return  IngredienteMap.buildIngredienteDTO(ingredienteRepo.findById(id).orElseThrow(
+				() -> new AcademyException()));
+	}
+	
 	
 	
 }
