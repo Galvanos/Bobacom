@@ -2,6 +2,7 @@ package com.bobacom.backend.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.bobacom.backend.enums.StatoSpedizione;
