@@ -1,6 +1,7 @@
 package com.bobacom.backend.component;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,20 +17,11 @@ import lombok.Setter;
 @SessionScope
 public class Carrello implements Serializable{
 	private List<CartItem> items = new ArrayList<>();
-	private Float totale = 0f;
-	
-	public void addItem(CartItem item) {
-		items.add(item);
-		totale+=item.getPrezzo();
-	}
-	public void removeItem(CartItem item) {
-		items.remove(item);
-		totale-=item.getPrezzo();
-	}
-	public float getTotal() {
-		Float total = 0f;
-		for(CartItem i : items)
-			total += i.getPrezzo();
+
+	public BigDecimal getTotal() {
+		BigDecimal total = BigDecimal.ZERO;
+		for(CartItem i: items)
+			total.add(i.getPrezzo().multiply(BigDecimal.valueOf(i.getQuantita())));
 		return total;
 	}
 	
