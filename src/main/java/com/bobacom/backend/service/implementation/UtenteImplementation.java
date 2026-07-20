@@ -109,7 +109,7 @@ public class UtenteImplementation implements IUtenteService {
 	
 	@Transactional
 	@Override
-	public void update(UtenteReq req) throws Exception {
+	public UtenteDTO update(UtenteReq req) throws Exception {
 		if(req == null) {
 			throw new AcademyException("utente non fornito");
 		}
@@ -148,13 +148,17 @@ public class UtenteImplementation implements IUtenteService {
 		Optional.ofNullable(req).map(UtenteReq::getIndirizzo).ifPresent(storedUser::setIndirizzo);
 		Optional.ofNullable(req).map(UtenteReq::getRuolo).ifPresent(storedUser::setRuolo);
 		
-		repository.save(storedUser);
+		Utente updatedUser = repository.save(storedUser);
 		
 		updateUtenteForAuthentication(req, formerUsername, encodedPassword);
+		
+		//TODO riprendere qui
+		return UtenteDTO.builder().credito(updatedUser.getCredito())
+				.build();
 	}
 	
 	@Override
-	public void updateByUser(UtenteReq req) throws Exception {
+	public UtenteDTO updateByUser(UtenteReq req) throws Exception {
 		Integer id = req.getId();
 		if(id == null) {
 			throw new AcademyException("id utente non fornito");
@@ -178,7 +182,7 @@ public class UtenteImplementation implements IUtenteService {
 		//annullo credito e ruolo che un utente non può cambiarsi
 		req.setCredito(null);
 		req.setRuolo(null);
-		update(req);
+		return update(req);
 	}
 
 	@Override

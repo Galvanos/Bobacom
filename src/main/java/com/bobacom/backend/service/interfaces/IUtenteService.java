@@ -32,16 +32,18 @@ public interface IUtenteService {
 	/**
 	 * Aggiornamento senza vincoli, da usare per gli admin
 	 * @param req la richiesta con l'update
+	 * @return l'utente appena aggiornato
 	 * @throws Exception in caso di errori
 	 */
-	void update(UtenteReq req) throws Exception;
+	UtenteDTO update(UtenteReq req) throws Exception;
 	/**
 	 * Aggiornamento da parte dell'utente, ad esempio non consente di aggiornare il credito,
 	 * verifica che l'utente che aggiorna sia l'utente stesso
 	 * @param req la richiesta con l'aggiornamento
+	 * @return l'utente appena aggiornato
 	 * @throws Exception in caso di errori
 	 */
-	void updateByUser(UtenteReq req) throws Exception;
+	UtenteDTO updateByUser(UtenteReq req) throws Exception;
 	UtenteDTO getById(Integer id) throws Exception;
 	/**
 	 * Informazioni riguardo l'utente accessibili solo all'utente stesso,

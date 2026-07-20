@@ -17,6 +17,7 @@ import com.bobacom.backend.service.interfaces.IUtenteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 
@@ -69,5 +70,10 @@ public class UtenteController {
 		return ResponseEntity.ok(list);
 	}
 	
+	@PatchMapping("/user/update")
+	public ResponseEntity<ResponseDTO> updateByUser(@RequestBody(required = true) UtenteReq  updatingUser) throws Exception{
+		UtenteDTO updatedUser = service.updateByUser(updatingUser);
+		return ResponseEntity.ok(new ResponseDTO("updated..."));
+	}
 	
 }
