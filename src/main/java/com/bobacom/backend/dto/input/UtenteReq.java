@@ -34,4 +34,5 @@ public class UtenteReq {
 	private Ruolo ruolo;//in caso di ruolo null si impone user
 	private BigDecimal credito;//credito non obbligatorio in fase di creazione
 	private String indirizzo;//indirizzo non obbligatorio
+	
 }

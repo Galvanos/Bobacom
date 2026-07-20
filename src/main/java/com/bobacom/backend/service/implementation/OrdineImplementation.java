@@ -8,6 +8,7 @@ import com.bobacom.backend.dto.input.OrdineRequest;
 import com.bobacom.backend.enums.StatoSpedizione;
 import com.bobacom.backend.model.Ordine;
 import com.bobacom.backend.model.Utente;
+import com.bobacom.backend.repository.IOrdineProdottoRepository;
 import com.bobacom.backend.repository.IOrdineRepository;
 import com.bobacom.backend.repository.IUtenteRepository;
 import com.bobacom.backend.service.interfaces.IOrdineService;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OrdineImplementation implements IOrdineService{
 	private final IUtenteRepository utenteRepo;
 	private final IOrdineRepository ordineRepo;
+	private final IOrdineProdottoRepository opRepo;
 
 	@Transactional
 	@Override
@@ -48,7 +50,7 @@ public class OrdineImplementation implements IOrdineService{
 		}
 		utente.addOrdine(ordine);
 		
-		ordineRepo.save(ordine);
+		ordine = ordineRepo.save(ordine);
 		log.debug("ordine: {}", ordine);
 		
 	}

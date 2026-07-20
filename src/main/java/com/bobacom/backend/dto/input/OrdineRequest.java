@@ -1,6 +1,7 @@
 package com.bobacom.backend.dto.input;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 import com.bobacom.backend.dto.input.validation.ValidationGroups;
 
