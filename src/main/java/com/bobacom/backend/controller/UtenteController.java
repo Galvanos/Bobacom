@@ -3,6 +3,7 @@ package com.bobacom.backend.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.bobacom.backend.dto.input.UtenteReq;
+import com.bobacom.backend.dto.input.validation.ValidationGroups;
 import com.bobacom.backend.dto.output.ResponseDTO;
 import com.bobacom.backend.dto.output.UtenteDTO;
 import com.bobacom.backend.service.interfaces.IUtenteService;
@@ -30,7 +32,7 @@ public class UtenteController {
 	private final IUtenteService service;
 
 	@PostMapping("/public/create")
-	public ResponseEntity<ResponseDTO> createByUser(@RequestBody(required = true) UtenteReq  creatingUser) throws Exception {
+	public ResponseEntity<ResponseDTO> createByUser(@RequestBody(required = true) @Validated(ValidationGroups.Create.class) UtenteReq  creatingUser) throws Exception {
 		UtenteDTO created = service.createByUser(creatingUser);
 		return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentContextPath()
 				.path("/user/getById").queryParam("id", created.getId()).build().toUri())
@@ -39,7 +41,7 @@ public class UtenteController {
 	}
 	
 	@PostMapping("/admin/create")
-	public ResponseEntity<ResponseDTO> createByAdmin(@RequestBody(required = true) UtenteReq  creatingUser) throws Exception {
+	public ResponseEntity<ResponseDTO> createByAdmin(@RequestBody(required = true) @Validated(ValidationGroups.Create.class) UtenteReq  creatingUser) throws Exception {
 		UtenteDTO created = service.create(creatingUser);
 		return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentContextPath()
 				.path("/admin/getById").buildAndExpand(created.getId()).toUri())
@@ -71,7 +73,7 @@ public class UtenteController {
 	}
 	
 	@PatchMapping("/user/update")
-	public ResponseEntity<ResponseDTO> updateByUser(@RequestBody(required = true) UtenteReq  updatingUser) throws Exception{
+	public ResponseEntity<ResponseDTO> updateByUser(@RequestBody(required = true) @Validated(ValidationGroups.Update.class) UtenteReq  updatingUser) throws Exception{
 		UtenteDTO updatedUser = service.updateByUser(updatingUser);
 		return ResponseEntity.ok(new ResponseDTO("updated..."));
 	}

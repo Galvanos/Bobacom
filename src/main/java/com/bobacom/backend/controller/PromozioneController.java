@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/rest/promozione")
 public class PromozioneController {
+	/*
 	private final IPromozioneService promozioneService;
 	
 	@PostMapping("create")
@@ -52,4 +53,6 @@ public class PromozioneController {
 	public ResponseEntity<Object> getById(@RequestParam (required = true) Integer id) throws Exception{
 		return ResponseEntity.ok(promozioneService.getById(id));
 	}
+	
+	*/
 }
