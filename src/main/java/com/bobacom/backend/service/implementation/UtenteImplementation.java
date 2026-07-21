@@ -51,7 +51,7 @@ public class UtenteImplementation implements IUtenteService {
 	 */
 	@Getter
 	@Setter
-	@Value(value = "${credito.valoreDefault:0}")
+	@Value(value = "${app.credito.valoreDefault:0}")
 	private BigDecimal creditoDefault;
 	
 	
@@ -61,7 +61,7 @@ public class UtenteImplementation implements IUtenteService {
 	 * se non impostata nel file di properties viene lasciata come stringa vuota
 	 */
 	@Getter
-	@Value(value = "${credito.secret:}")
+	@Value(value = "${app.credito.secret:}")
 	private String creditoSecret;
 	
 	@Transactional
