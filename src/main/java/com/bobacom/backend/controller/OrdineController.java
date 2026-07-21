@@ -27,10 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/rest/ordine")
 public class OrdineController {
 //	private Carrello carrello;
-	private IOrdineService orderService;
+	private final IOrdineService orderService;
 	
 	@PostMapping("create")
 	public ResponseEntity<ResponseDTO> create(@RequestBody (required=true) OrdineRequest request) throws Exception{
+		log.debug("entered controller/create;");
 		orderService.create(request);
 		return ResponseEntity.ok(ResponseDTO.builder().msg("Ingrediente aggiunto").build());
 	}
