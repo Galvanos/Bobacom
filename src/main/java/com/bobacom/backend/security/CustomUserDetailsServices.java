@@ -1,6 +1,7 @@
 package com.bobacom.backend.security;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.core.ParameterizedTypeReference;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.stereotype.Service;
 
+import com.bobacom.backend.configuration.InMemorySecurityControl;
 import com.bobacom.backend.dto.output.UtenteDTO;
 import com.bobacom.backend.model.Utente;
 import com.bobacom.backend.repository.IUtenteRepository;
@@ -32,22 +34,21 @@ public class CustomUserDetailsServices implements UserDetailsService {
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		log.debug("loadUserByUsername: {}", username);
 		
-		List<Utente> byUsername = utenteRepository.findByUsername(username);
-		//username è unique, se la list è meno di 1 vuol dire che non c'è , se è più di 1 vuol dire che non è univoco,  il che dovrebbe essere impossibile, comunque metto non trovato
-		if(byUsername.size() != 1) {
-			throw new UsernameNotFoundException("utente non trovato");
-		}
-		
-		Utente utente = byUsername.get(0);
+		Utente byUsername = utenteRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("utente non trovato"));
 		
 		return User.builder()
-				.username(utente.getUsername())
-				.password(utente.getPassword())//password giá criptata su db, per cui non serve criptarla
-				.roles(utente.getRuolo().name())
+				.username(byUsername.getUsername())
+				.password(byUsername.getPassword())//password giá criptata su db, per cui non serve criptarla
+				.roles(byUsername.getRuolo().name())
 				.build();
 	}
 	
-	//temporaneo finché persiste InMemorySecurityControl
+	/**
+	 * 
+	 * @return
+	 * @throws Exception
+	 * @deprecated rimane fino alla rimozione dell'{@link InMemorySecurityControl}
+	 */
 	@Deprecated
 	public InMemoryUserDetailsManager loadUser() throws Exception {
 		log.debug("loadUser ....");
