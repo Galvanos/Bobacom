@@ -44,7 +44,7 @@ public class OrdineProdotto {
 			foreignKey = @ForeignKey(name ="fk_prodotto_ordine"),
 			nullable = false
 			)
-	private Prodotto prodotto; 
+	private Prodotto prodotto;
 	
 	@Column(nullable = false)
 	private Integer quantita;

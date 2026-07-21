@@ -20,9 +20,12 @@ public class Carrello implements Serializable{
 
 	public BigDecimal getTotal() {
 		BigDecimal total = BigDecimal.ZERO;
-		for(CartItem i: items)
+		for(CartItem i : items)
 			total.add(i.getPrezzo().multiply(BigDecimal.valueOf(i.getQuantita())));
 		return total;
 	}
 	
+	public void svuotaCarrello() {
+		items.clear();
+	}
 }

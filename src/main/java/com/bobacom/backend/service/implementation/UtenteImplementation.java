@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bobacom.backend.dto.input.AddCreditReq;
@@ -32,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+@Service
 @RequiredArgsConstructor
 @Slf4j
 public class UtenteImplementation implements IUtenteService {
@@ -86,7 +88,7 @@ public class UtenteImplementation implements IUtenteService {
 		      .username(req.getUsername())
 		      .build();
 		utente = repository.save(utente);
-		updateUtenteForAuthentication(req, null, encodedPassword);
+		//updateUtenteForAuthentication(req, null, encodedPassword);
 		return UtenteDTO.builder()
 				.credito(utente.getCredito())
 				.email(utente.getEmail())
@@ -150,7 +152,7 @@ public class UtenteImplementation implements IUtenteService {
 		
 		Utente updatedUser = repository.save(storedUser);
 		
-		updateUtenteForAuthentication(req, formerUsername, encodedPassword);
+		//updateUtenteForAuthentication(req, formerUsername, encodedPassword);
 		
 		//TODO riprendere qui
 		return UtenteDTO.builder().credito(updatedUser.getCredito())
