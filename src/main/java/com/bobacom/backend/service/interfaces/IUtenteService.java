@@ -48,14 +48,23 @@ public interface IUtenteService {
 	 */
 	UtenteDTO updateByUser(UtenteReq req) throws Exception;
 	UtenteDTO getById(Integer id) throws Exception;
+	UtenteDTO getByUsername(String username) throws Exception;
 	/**
 	 * Informazioni riguardo l'utente accessibili solo all'utente stesso,
 	 * verifica che il richiedente sia lo stesso utente collegato
-	 * @param id
+	 * @param id id dell'utente cercato
 	 * @return i dati dell'utente
-	 * @throws Exception
+	 * @throws Exception in caso di errori
 	 */
 	UtenteDTO getByIdByUser(Integer id) throws Exception;
+	/**
+	 * Informazioni riguardo l'utente accessibili solo all'utente stesso,
+	 * verifica che il richiedente sia lo stesso utente collegato
+	 * @param username nome utente cercato
+	 * @return i dati dell'utente
+	 * @throws Exception in caso di errori
+	 */
+	UtenteDTO getByUsernameByUser(String username) throws Exception;
 	List<UtenteDTO> list() throws Exception;
 	void delete(Integer id) throws Exception;
 	

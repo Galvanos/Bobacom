@@ -1,5 +1,6 @@
 package com.bobacom.backend.service.implementation;
 
+import com.bobacom.backend.controller.AuthController;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,8 @@ import com.bobacom.backend.dto.output.UtenteDTO;
 import com.bobacom.backend.enums.Ruolo;
 import com.bobacom.backend.exceptions.AcademyException;
 import com.bobacom.backend.exceptions.ForbiddenException;
+import com.bobacom.backend.exceptions.UnauthorizedException;
+import com.bobacom.backend.exceptions.UserNotFoundException;
 import com.bobacom.backend.model.Utente;
 import com.bobacom.backend.repository.IUtenteRepository;
 import com.bobacom.backend.service.interfaces.IUtenteService;
@@ -36,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class UtenteImplementation implements IUtenteService {
+
 
 	private final IUtenteRepository repository;
 	
@@ -51,7 +56,7 @@ public class UtenteImplementation implements IUtenteService {
 	@Setter
 	@Value(value = "${app.credito.valoreDefault:0}")
 	private BigDecimal creditoDefault;
-	
+
 	
 	/**
 	 * Valore inserito per simulare una transazione sicura per aggiungere il credito, 
@@ -61,6 +66,8 @@ public class UtenteImplementation implements IUtenteService {
 	@Getter
 	@Value(value = "${app.credito.secret:}")
 	private String creditoSecret;
+
+	
 	
 	@Transactional
 	@Override
@@ -110,7 +117,6 @@ public class UtenteImplementation implements IUtenteService {
 	@Transactional
 	@Override
 	public UtenteDTO update(UtenteReq req) throws Exception {
-		//TODO verificare che l'utente loggato non stia cambiando il suo username  poiché nel JWT che sta usando c'é quello username
 		if(req == null) {
 			throw new AcademyException("utente non fornito");
 		}
@@ -119,7 +125,7 @@ public class UtenteImplementation implements IUtenteService {
 			throw new AcademyException("id utente non fornito");
 		}
 		Utente storedUser = repository.findById(id)
-				.orElseThrow(() -> new AcademyException("utente non trovato"));
+				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
 		String formerUsername = storedUser.getUsername();
 		String requestUsername = req.getUsername();
 		if(requestUsername != null) {
@@ -190,8 +196,7 @@ public class UtenteImplementation implements IUtenteService {
 					throw new ForbiddenException("utente non autorizzato");
 				}
 			}else {
-				//idealmente si dovrebbe mettere unauthorized anziché forbidden
-				throw new ForbiddenException("utente non autorizzato");
+				throw new UnauthorizedException("utente non autorizzato");
 			}
 		}
 		//annullo credito, ruolo e username che un utente non può cambiarsi
@@ -204,8 +209,7 @@ public class UtenteImplementation implements IUtenteService {
 	@Override
 	public UtenteDTO getById(Integer id) throws Exception {
 		Utente storedUser = repository.findById(id)
-				.orElseThrow(() -> new AcademyException("utente non trovato"));
-		
+				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
 		return UtenteDTO.builder()
 				.credito(storedUser.getCredito())
 				.email(storedUser.getEmail())
@@ -238,7 +242,7 @@ public class UtenteImplementation implements IUtenteService {
 	@Override
 	public void delete(Integer id) throws Exception {
 		Utente storedUser = repository.findById(id)
-				.orElseThrow(() -> new AcademyException("utente non trovato"));
+				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
 		repository.delete(storedUser);
 		
 	}
@@ -252,7 +256,7 @@ public class UtenteImplementation implements IUtenteService {
 			throw new AcademyException("secret non valido");
 		}
 		Utente storedUser = repository.findById(userId)
-				.orElseThrow(() -> new AcademyException("utente non trovato"));
+				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
 		BigDecimal credito = storedUser.getCredito();
 		if(credito == null) {
 			credito = BigDecimal.ZERO;
@@ -294,11 +298,51 @@ public class UtenteImplementation implements IUtenteService {
 					throw new ForbiddenException("utente non autorizzato");
 				}
 			}else {
-				//idealmente si dovrebbe mettere unauthorized anziché forbidden
-				throw new ForbiddenException("utente non autorizzato");
+				throw new UnauthorizedException("utente non autorizzato");
 			}
 		}
 		return storedUser;
 	}
+
+	@Override
+	public UtenteDTO getByUsername(String username) throws Exception {
+		Utente storedUser = repository.findByUsername(username)
+				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
+		
+		return UtenteDTO.builder()
+				.credito(storedUser.getCredito())
+				.email(storedUser.getEmail())
+				.id(storedUser.getId())
+				.indirizzo(storedUser.getIndirizzo())
+				.password(storedUser.getPassword())//si tiene l'hash della password per poter usare il risultato di questo metodo in altri contesti, sarà cura del restcontroller annullarla
+				.ruolo(storedUser.getRuolo())
+				.username(storedUser.getUsername())
+				.build();
+		
+	}
+
+	@Override
+	public UtenteDTO getByUsernameByUser(String username) throws Exception {
+		UtenteDTO storedUser = getByUsername(username);
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if(authentication != null) {
+			if(authentication.isAuthenticated()) {
+				String authenticatedUsername = authentication.getName();
+				Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+				boolean isAdmin = authorities.stream().map(t -> t.getAuthority()).anyMatch(t -> Objects.equals(t, "ROLE_"+Ruolo.ADMIN.name()));
+				boolean differentUsername = !Objects.equals(authenticatedUsername, storedUser.getUsername());
+				if(!isAdmin && differentUsername) {
+					throw new ForbiddenException("utente non autorizzato");
+				}
+			}else {
+				throw new UnauthorizedException("utente non autorizzato");
+			}
+		}
+		
+		return storedUser;
+	}
+	
+	
+	
 
 }

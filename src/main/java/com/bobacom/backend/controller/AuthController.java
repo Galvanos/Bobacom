@@ -21,6 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bobacom.backend.dto.input.LoginReq;
 import com.bobacom.backend.dto.input.validation.ValidationGroups;
 import com.bobacom.backend.dto.output.LoginDTO;
+import com.bobacom.backend.dto.output.UtenteDTO;
+import com.bobacom.backend.exceptions.ForbiddenException;
+import com.bobacom.backend.exceptions.UnauthorizedException;
+import com.bobacom.backend.exceptions.UserNotFoundException;
 import com.bobacom.backend.security.CustomUserDetailsService;
 import com.bobacom.backend.security.interfaces.JwtService;
 import com.bobacom.backend.service.interfaces.IUtenteService;
@@ -34,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("rest/auth")
 public class AuthController {
 
-	private final IUtenteService utS;
+	private final IUtenteService utenteService;
 	private final AuthenticationManager authenticationManager;
 	private final JwtService jwtService;
 	private final CustomUserDetailsService userDetailsService;
@@ -123,8 +127,12 @@ public class AuthController {
 	
 	@GetMapping("/me")
 	public ResponseEntity<Object> me(Authentication authentication) throws Exception {
-		LoginReq req = new LoginReq();
-		req.setUsername(authentication.getName());
-		return ResponseEntity.ok(utS.me(req));
+		try {
+			UtenteDTO byUsernameByUser = utenteService.getByUsernameByUser(authentication.getName());
+			byUsernameByUser.setCredito(null).setEmail(null).setIndirizzo(null).setPassword(null);
+			return ResponseEntity.ok(byUsernameByUser);
+		}catch(UserNotFoundException userNotFoundException) {
+			throw new UnauthorizedException("utente e/o password non validi");
+		}
 	}
 }
