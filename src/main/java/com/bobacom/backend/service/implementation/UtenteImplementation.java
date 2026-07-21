@@ -14,7 +14,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,8 +39,7 @@ public class UtenteImplementation implements IUtenteService {
 
 	private final IUtenteRepository repository;
 	
-	private final PasswordEncoder getPasswordEncoder;
-	private final InMemoryUserDetailsManager inMemoryUserDetailsManager;
+	private final PasswordEncoder passwordEncoder;
 	
 	
 	/**
@@ -78,7 +76,7 @@ public class UtenteImplementation implements IUtenteService {
 		if(alreadyExistsUsername) {
 			throw new AcademyException("username già esistente");
 		}
-		String encodedPassword = getPasswordEncoder.encode(req.getPassword());
+		String encodedPassword = passwordEncoder.encode(req.getPassword());
 		Utente utente = Utente.builder()
 		      .credito(req.getCredito())
 		      .email(req.getEmail())
@@ -88,7 +86,7 @@ public class UtenteImplementation implements IUtenteService {
 		      .username(req.getUsername())
 		      .build();
 		utente = repository.save(utente);
-		updateUtenteForAuthentication(req, null, encodedPassword);
+		
 		return UtenteDTO.builder()
 				.credito(utente.getCredito())
 				.email(utente.getEmail())
@@ -152,7 +150,7 @@ public class UtenteImplementation implements IUtenteService {
 		
 		String password = req.getPassword();
 		if(password != null) {
-			encodedPassword = getPasswordEncoder.encode(password);
+			encodedPassword = passwordEncoder.encode(password);
 			storedUser.setPassword(encodedPassword);
 		}
 		
@@ -162,8 +160,6 @@ public class UtenteImplementation implements IUtenteService {
 		Optional.ofNullable(req).map(UtenteReq::getRuolo).ifPresent(storedUser::setRuolo);
 		
 		Utente updatedUser = repository.save(storedUser);
-		
-		updateUtenteForAuthentication(req, formerUsername, encodedPassword);
 		
 		return UtenteDTO.builder()
 				.credito(updatedUser.getCredito())
@@ -232,7 +228,7 @@ public class UtenteImplementation implements IUtenteService {
 					.email(storedUser.getEmail())
 					.id(storedUser.getId())
 					.indirizzo(storedUser.getIndirizzo())
-					.password(storedUser.getPassword())//si tiene l'hash della password perché serve in creazione utenti inmemory, ma nel rest controller va annullata
+					.password(storedUser.getPassword())//hash della password, nel rest controller va annullata
 					.ruolo(storedUser.getRuolo())
 					.username(storedUser.getUsername())
 					.build()
@@ -303,30 +299,6 @@ public class UtenteImplementation implements IUtenteService {
 			}
 		}
 		return storedUser;
-	}
-	
-	/**
-	 * Aggiorna o crea le informazioni utente assiciate a {@link #inMemoryUserDetailsManager}
-	 * @param req la richiesta con i nuovi dati dell'utente
-	 * @param formerUsername nome utente precedente che verrà eventualmente eliminato, 
-	 *        se null lo prende da {@code req}{@link UtenteReq#getUsername()}
-	 * @param encodedPassword password codificata da inserire, 
-	 * 		  se null recupera {@code req}{@link UtenteReq#getPassword()} e la codifica usando {@link #getPasswordEncoder}
-	 */
-	public void updateUtenteForAuthentication(UtenteReq req, String formerUsername, String encodedPassword) {
-		formerUsername = Optional.ofNullable(formerUsername).orElse(req.getUsername());
-		if (inMemoryUserDetailsManager.userExists(formerUsername)) {
-			inMemoryUserDetailsManager.deleteUser(formerUsername);
-			log.debug("utente {} deleted", req.getUsername());
-		}
-		encodedPassword = Optional.ofNullable(encodedPassword).orElseGet(() -> getPasswordEncoder.encode(req.getPassword()));
-		inMemoryUserDetailsManager.createUser(User
-				.withUsername(req.getUsername())
-				.password(encodedPassword)
-				.roles(req.getRuolo().toString())
-				.build()
-				);
-		log.debug("User {} is created", req.getUsername());
 	}
 
 }

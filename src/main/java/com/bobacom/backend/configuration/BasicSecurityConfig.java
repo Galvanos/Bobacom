@@ -20,7 +20,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class BasicSecurityConfig {
 
 	@Bean
-	PasswordEncoder getPasswordEncoder() {
+	PasswordEncoder passwordEncoder() {
 		return PasswordEncoderFactories.createDelegatingPasswordEncoder();
 	}
 
