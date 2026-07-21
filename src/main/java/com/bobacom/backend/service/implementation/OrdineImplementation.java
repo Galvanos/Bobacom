@@ -1,12 +1,17 @@
 package com.bobacom.backend.service.implementation;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.bobacom.backend.component.Carrello;
 import com.bobacom.backend.component.CartItem;
 import com.bobacom.backend.dto.input.OrdineRequest;
+import com.bobacom.backend.dto.map.IngredienteMap;
+import com.bobacom.backend.dto.map.OrdineMap;
+import com.bobacom.backend.dto.output.OrdineDTO;
 import com.bobacom.backend.enums.StatoSpedizione;
 import com.bobacom.backend.model.Ordine;
 import com.bobacom.backend.model.OrdineProdotto;
@@ -89,6 +94,12 @@ public class OrdineImplementation implements IOrdineService{
 			 order.getUtente().removeOrdine(order);
 		 }
 		 ordineRepo.delete(order);
+	}
+
+	@Override
+	public List<OrdineDTO> list(Integer id, Integer utenteId) throws Exception {
+		List<Ordine> ordineList = ordineRepo.searchByFilter(id, utenteId);
+		return ordineList.stream().map(i -> OrdineMap.buildOrdineDTO(i)).collect(Collectors.toList());
 	}
 
 }
