@@ -38,7 +38,7 @@ public class OrdineImplementation implements IOrdineService{
 				.orElseThrow(() -> new Exception("no user found with id: " + req.getUtente_id()));
 				
 		Ordine ordine = Ordine.builder()
-				.prezzoTotale(req.getPrezzoTotale())
+				.prezzoTotale(cart.getTotal())
 				.dataCreazione(LocalDateTime.now())
 				.indirizzoDestinazione(req.getIndirizzoDestinazione())
 				.utente(utente)
