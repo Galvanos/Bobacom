@@ -27,6 +27,7 @@ import com.bobacom.backend.exceptions.AcademyException;
 import com.bobacom.backend.exceptions.ForbiddenException;
 import com.bobacom.backend.exceptions.UnauthorizedException;
 import com.bobacom.backend.exceptions.UserNotFoundException;
+import com.bobacom.backend.mapping.UtenteMap;
 import com.bobacom.backend.model.Utente;
 import com.bobacom.backend.repository.IUtenteRepository;
 import com.bobacom.backend.service.interfaces.IUtenteService;
@@ -94,15 +95,7 @@ public class UtenteImplementation implements IUtenteService {
 		      .build();
 		utente = repository.save(utente);
 		
-		return UtenteDTO.builder()
-				.credito(utente.getCredito())
-				.email(utente.getEmail())
-				.id(utente.getId())
-				.indirizzo(utente.getIndirizzo())
-				.password(utente.getPassword())//in caso verrà annullata nel rest controller
-				.ruolo(utente.getRuolo())
-				.username(utente.getUsername())
-				.build();
+		return UtenteMap.buildUtenteDTO(utente);
 	}
 	
 
@@ -167,15 +160,7 @@ public class UtenteImplementation implements IUtenteService {
 		
 		Utente updatedUser = repository.save(storedUser);
 		
-		return UtenteDTO.builder()
-				.credito(updatedUser.getCredito())
-				.email(updatedUser.getEmail())
-				.id(updatedUser.getId())
-				.indirizzo(updatedUser.getIndirizzo())
-				.password(updatedUser.getPassword())//in caso verrà annullata nel rest controller
-				.ruolo(updatedUser.getRuolo())
-				.username(updatedUser.getUsername())
-				.build();
+		return UtenteMap.buildUtenteDTO(updatedUser);
 	}
 	
 	@Override
@@ -210,15 +195,7 @@ public class UtenteImplementation implements IUtenteService {
 	public UtenteDTO getById(Integer id) throws Exception {
 		Utente storedUser = repository.findById(id)
 				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
-		return UtenteDTO.builder()
-				.credito(storedUser.getCredito())
-				.email(storedUser.getEmail())
-				.id(storedUser.getId())
-				.indirizzo(storedUser.getIndirizzo())
-				.password(storedUser.getPassword())//si tiene l'hash della password per poter usare il risultato di questo metodo in altri contesti, sarà cura del restcontroller annullarla
-				.ruolo(storedUser.getRuolo())
-				.username(storedUser.getUsername())
-				.build();
+		return UtenteMap.buildUtenteDTO(storedUser);
 		
 	}
 
@@ -226,24 +203,16 @@ public class UtenteImplementation implements IUtenteService {
 	public List<UtenteDTO> list() throws Exception {
 		List<Utente> users = repository.findAll();
 		users = Optional.ofNullable(users).orElse(Collections.emptyList());
-		return users.stream().map(storedUser -> 
-			 UtenteDTO.builder()
-					.credito(storedUser.getCredito())
-					.email(storedUser.getEmail())
-					.id(storedUser.getId())
-					.indirizzo(storedUser.getIndirizzo())
-					.password(storedUser.getPassword())//hash della password, nel rest controller va annullata
-					.ruolo(storedUser.getRuolo())
-					.username(storedUser.getUsername())
-					.build()
-		).toList();
+		return UtenteMap.buildUtenteDTOList(users);
 	}
 
+
 	@Override
-	public void delete(Integer id) throws Exception {
+	public UtenteDTO delete(Integer id) throws Exception {
 		Utente storedUser = repository.findById(id)
 				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
 		repository.delete(storedUser);
+		return UtenteMap.buildUtenteDTO(storedUser);
 		
 	}
 
@@ -265,15 +234,7 @@ public class UtenteImplementation implements IUtenteService {
 		BigDecimal resultingCredit = credito.add(addingCredit);
 		storedUser.setCredito(resultingCredit);
 		storedUser = repository.save(storedUser);
-		return UtenteDTO.builder()
-				.credito(storedUser.getCredito())
-				.email(storedUser.getEmail())
-				.id(storedUser.getId())
-				.indirizzo(storedUser.getIndirizzo())
-				.password(storedUser.getPassword())//si tiene l'hash della password, sarà cura dei rest controller annullarla
-				.ruolo(storedUser.getRuolo())
-				.username(storedUser.getUsername())
-				.build();
+		return UtenteMap.buildUtenteDTO(storedUser);
 	}
 
 
@@ -309,15 +270,7 @@ public class UtenteImplementation implements IUtenteService {
 		Utente storedUser = repository.findByUsername(username)
 				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
 		
-		return UtenteDTO.builder()
-				.credito(storedUser.getCredito())
-				.email(storedUser.getEmail())
-				.id(storedUser.getId())
-				.indirizzo(storedUser.getIndirizzo())
-				.password(storedUser.getPassword())//si tiene l'hash della password per poter usare il risultato di questo metodo in altri contesti, sarà cura del restcontroller annullarla
-				.ruolo(storedUser.getRuolo())
-				.username(storedUser.getUsername())
-				.build();
+		return UtenteMap.buildUtenteDTO(storedUser);
 		
 	}
 

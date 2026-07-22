@@ -24,7 +24,6 @@ public interface IUtenteService {
 	 * ed impostati dei valori (ad esempio il credito iniziale e il ruolo come utente)
 	 * @param req la richiesta di creazione utente
 	 * @return l'utente appena creato
-	 * @return 
 	 * @throws Exception in caso di errore
 	 */
 	UtenteDTO createByUser(UtenteReq req) throws Exception;
@@ -66,14 +65,26 @@ public interface IUtenteService {
 	 */
 	UtenteDTO getByUsernameByUser(String username) throws Exception;
 	List<UtenteDTO> list() throws Exception;
-	void delete(Integer id) throws Exception;
+	/**
+	 * Cancella un utente
+	 * @param id id dell'utente da cancellare
+	 * @return l'utente appena cancellato
+	 * @throws Exception in caso di errori, tra cui utente inesistente
+	 */
+	UtenteDTO delete(Integer id) throws Exception;
 	
 	/**
 	 * Funzione richiamabile da admin per aumentare il credito
-	 * @param addCredReq
-	 * @return
-	 * @throws Exception
+	 * @param addCredReq richiesta per aggiungere il credito
+	 * @return l'utente dopo che gli è stato aggiunto il credito
+	 * @throws Exception  in caso di errori
 	 */
 	UtenteDTO addCredit(AddCreditReq addCredReq) throws Exception;
+	/**
+	 * Funzione richiamabile dall'utente per aggiungersi credito, verifica che ad aggiungere credio sia l'utente stesso
+	 * @param addCreditReq richiesta per aggiungere il credito
+	 * @return l'utente dopo che gli è stato aggiunto il credito
+	 * @throws Exception in caso di errori
+	 */
 	UtenteDTO addCreditByUser(AddCreditReq addCreditReq) throws Exception;
 }
