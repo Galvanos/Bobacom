@@ -18,8 +18,11 @@ import com.bobacom.backend.service.interfaces.IUtenteService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 
@@ -64,6 +67,21 @@ public class UtenteController {
 	}
 	
 	
+	@GetMapping("/user/getByUsername")
+	public  ResponseEntity<UtenteDTO> getByUsernameByUser(@RequestParam String username) throws Exception {
+		UtenteDTO byUsernameByUser = service.getByUsernameByUser(username);
+		byUsernameByUser.setPassword(null);//password annullata anche perché sarebbe un hash, non servirebbe a molto
+		return ResponseEntity.ok(byUsernameByUser);
+	}
+	
+	
+	@GetMapping("/admin/getByUsername")
+	public  ResponseEntity<UtenteDTO> getByUsernameByAdmin(@RequestParam String username) throws Exception {
+		UtenteDTO byUsername = service.getByUsername(username);
+		byUsername.setPassword(null);//password annullata anche perché sarebbe un hash, non servirebbe a molto
+		return ResponseEntity.ok(byUsername);
+	}
+	
 	@GetMapping("/admin/list")
 	public  ResponseEntity<List<UtenteDTO>> list() throws Exception {
 		List<UtenteDTO> list = service.list();
@@ -77,5 +95,18 @@ public class UtenteController {
 		UtenteDTO updatedUser = service.updateByUser(updatingUser);
 		return ResponseEntity.ok(new ResponseDTO("updated..."));
 	}
+	
+	@PatchMapping("/admin/update")
+	public ResponseEntity<ResponseDTO> updateByAdmin(@RequestBody(required = true) @Validated(ValidationGroups.Update.class) UtenteReq  updatingUser) throws Exception{
+		UtenteDTO updatedUser = service.update(updatingUser);
+		return ResponseEntity.ok(new ResponseDTO("updated..."));
+	}
+	
+	@DeleteMapping("/admin/delete/{id}")
+	public ResponseEntity<ResponseDTO> delete(@PathVariable (required=true) Integer id) throws Exception{
+		UtenteDTO updatedUser = service.delete(id);
+		return ResponseEntity.ok(new ResponseDTO("updated..."));
+	}
+	
 	
 }
