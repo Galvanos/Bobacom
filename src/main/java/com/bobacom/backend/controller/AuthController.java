@@ -129,8 +129,12 @@ public class AuthController {
 	public ResponseEntity<Object> me(Authentication authentication) throws Exception {
 		try {
 			UtenteDTO byUsernameByUser = utenteService.getByUsernameByUser(authentication.getName());
-			byUsernameByUser.setCredito(null).setEmail(null).setIndirizzo(null).setPassword(null);
-			return ResponseEntity.ok(byUsernameByUser);
+			//mi servono solo Id, username e ruolo dell'utente qui
+			UtenteDTO toReturn = UtenteDTO.builder().id(byUsernameByUser.getId())
+					.username(byUsernameByUser.getUsername())
+					.ruolo(byUsernameByUser.getRuolo())
+					.build();
+			return ResponseEntity.ok(toReturn);
 		}catch(UserNotFoundException userNotFoundException) {
 			throw new UnauthorizedException("utente e/o password non validi");
 		}
