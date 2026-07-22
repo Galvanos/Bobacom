@@ -18,7 +18,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-@Configuration
+//@Configuration
+//disattivato per implementazione spring security
 public class BasicSecurityConfig {
 
 	@Bean

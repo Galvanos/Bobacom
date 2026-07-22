@@ -19,7 +19,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-//TODO da impostare per tutti i percorsi e mettere config
+@Configuration
 public class SecurityConfig {
 
 	@Bean
