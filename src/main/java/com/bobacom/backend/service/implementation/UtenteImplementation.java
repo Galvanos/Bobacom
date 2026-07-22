@@ -95,7 +95,7 @@ public class UtenteImplementation implements IUtenteService {
 		      .build();
 		utente = repository.save(utente);
 		
-		return UtenteMap.buildUtenteDTO(utente);
+		return UtenteMap.buildUtenteDTO(utente, false);
 	}
 	
 
@@ -160,7 +160,7 @@ public class UtenteImplementation implements IUtenteService {
 		
 		Utente updatedUser = repository.save(storedUser);
 		
-		return UtenteMap.buildUtenteDTO(updatedUser);
+		return UtenteMap.buildUtenteDTO(updatedUser, false);
 	}
 	
 	@Override
@@ -195,7 +195,7 @@ public class UtenteImplementation implements IUtenteService {
 	public UtenteDTO getById(Integer id) throws Exception {
 		Utente storedUser = repository.findById(id)
 				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
-		return UtenteMap.buildUtenteDTO(storedUser);
+		return UtenteMap.buildUtenteDTO(storedUser, false);
 		
 	}
 
@@ -203,7 +203,7 @@ public class UtenteImplementation implements IUtenteService {
 	public List<UtenteDTO> list() throws Exception {
 		List<Utente> users = repository.findAll();
 		users = Optional.ofNullable(users).orElse(Collections.emptyList());
-		return UtenteMap.buildUtenteDTOList(users);
+		return UtenteMap.buildUtenteDTOList(users, false);
 	}
 
 
@@ -212,7 +212,7 @@ public class UtenteImplementation implements IUtenteService {
 		Utente storedUser = repository.findById(id)
 				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
 		repository.delete(storedUser);
-		return UtenteMap.buildUtenteDTO(storedUser);
+		return UtenteMap.buildUtenteDTO(storedUser, false);
 		
 	}
 
@@ -234,7 +234,7 @@ public class UtenteImplementation implements IUtenteService {
 		BigDecimal resultingCredit = credito.add(addingCredit);
 		storedUser.setCredito(resultingCredit);
 		storedUser = repository.save(storedUser);
-		return UtenteMap.buildUtenteDTO(storedUser);
+		return UtenteMap.buildUtenteDTO(storedUser, false);
 	}
 
 
@@ -270,7 +270,7 @@ public class UtenteImplementation implements IUtenteService {
 		Utente storedUser = repository.findByUsername(username)
 				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
 		
-		return UtenteMap.buildUtenteDTO(storedUser);
+		return UtenteMap.buildUtenteDTO(storedUser, false);
 		
 	}
 

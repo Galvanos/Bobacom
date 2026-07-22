@@ -19,22 +19,31 @@ public class UtenteMap {
 	 * di data e a parità di data, usando l'id che è autoincrementante, nella list di ordini non viene mappato l'utente 
 	 * internamente dato che sarebbe questo stesso utente
 	 * @param storedUser {@link Utente} da mappare
+	 * @param omitOrders se true viene lasciata a null la lista degi ordini, utile se si chiama questo mapping da un ordine
 	 * @return  una istanza di {@link UtenteDTO} che mappa l'utente
 	 */
-	public static UtenteDTO buildUtenteDTO(Utente storedUser) {
-		Set<Ordine> ordini = storedUser.getOrdini();
-		//comparatore ordini, vengono messi in ordine decrescente, quindi si guarda la data di creazione e a parità di data di creazione si guarda l'id che è autoincrementante
-		Comparator<Ordine> comparatorOrdini = Comparator.comparing(Ordine::getDataCreazione)
-				.thenComparing(Comparator.comparing(Ordine::getId)).reversed();
+	public static UtenteDTO buildUtenteDTO(Utente storedUser, boolean omitOrders) {
 		
-		List<OrdineDTO> ordiniDTOList = ordini.stream().sorted(comparatorOrdini).map(t -> OrdineDTO.builder()
-				.dataCreazione(DateOperations.dateToString(t.getDataCreazione()))
-				.id(t.getId())
-				 .indirizzoDestinazione(t.getIndirizzoDestinazione())
-				 .prezzoTotale(t.getPrezzoTotale())
-				 .status(t.getStatus().name())
-				 //utente non viene passato perché sarebbe l'utente stesso che si sta mappando ora
-				 .build()).toList();
+		List<OrdineDTO> ordiniDTOList = null;
+		
+		if (!omitOrders) {
+			Set<Ordine> ordini = storedUser.getOrdini();
+			// comparatore ordini, vengono messi in ordine decrescente, quindi si guarda la
+			// data di creazione e a parità di data di creazione si guarda l'id che è
+			// autoincrementante
+			Comparator<Ordine> comparatorOrdini = Comparator.comparing(Ordine::getDataCreazione)
+					.thenComparing(Comparator.comparing(Ordine::getId)).reversed();
+
+			ordiniDTOList = ordini.stream().sorted(comparatorOrdini)
+					.map(t -> OrdineDTO.builder().dataCreazione(DateOperations.dateToString(t.getDataCreazione()))
+							.id(t.getId()).indirizzoDestinazione(t.getIndirizzoDestinazione())
+							.prezzoTotale(t.getPrezzoTotale()).status(t.getStatus().name())
+							// utente non viene passato perché sarebbe l'utente stesso che si sta mappando
+							// ora
+							.build())
+					.toList();
+
+		}
 		return UtenteDTO.builder()
 				.credito(storedUser.getCredito())
 				.email(storedUser.getEmail())
@@ -48,13 +57,14 @@ public class UtenteMap {
 	}
 
 	/**
-	 * Crea una {@link List} di {@link UtenteDTO} usando {@link #buildUtenteDTO(Utente)} 
+	 * Crea una {@link List} di {@link UtenteDTO} usando {@link #buildUtenteDTO(Utente, boolean)} 
 	 * @param users {@link Collection} di {@link Utente}
+	 * @param omitOrders se true viene lasciata a null la lista degi ordini, utile se si chiama questo mapping da un ordine
 	 * @return una {@link List} di {@link UtenteDTO}
 	 */
-	public static List<UtenteDTO> buildUtenteDTOList(Collection<Utente> users) {
+	public static List<UtenteDTO> buildUtenteDTOList(Collection<Utente> users, boolean omitOrders) {
 		return users.stream().map(storedUser -> 
-			 buildUtenteDTO(storedUser)).toList();
+			 buildUtenteDTO(storedUser, omitOrders)).toList();
 	}
 
 }
