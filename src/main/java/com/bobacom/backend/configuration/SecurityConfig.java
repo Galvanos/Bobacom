@@ -39,8 +39,10 @@ public class SecurityConfig {
 						.requestMatchers("/rest/auth/me").authenticated()
 						.requestMatchers("/rest/auth/**").permitAll()
 						.requestMatchers("/rest/utente/user/**").authenticated()
+						.requestMatchers("/rest/credito/user/**").authenticated()
 		                
 		                .requestMatchers("/rest/utente/admin/**").hasRole("ADMIN")
+		                .requestMatchers("/rest/credito/admin/**").hasRole("ADMIN")
 
 						.anyRequest().permitAll())
 				.oauth2ResourceServer(

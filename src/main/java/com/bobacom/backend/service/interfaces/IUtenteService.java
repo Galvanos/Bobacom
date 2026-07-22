@@ -81,7 +81,8 @@ public interface IUtenteService {
 	 */
 	UtenteDTO addCredit(AddCreditReq addCredReq) throws Exception;
 	/**
-	 * Funzione richiamabile dall'utente per aggiungersi credito, verifica che ad aggiungere credio sia l'utente stesso
+	 * Funzione richiamabile dall'utente per aggiungersi credito, 
+	 * verifica che ad aggiungere credito sia l'utente stesso o un amministratore
 	 * @param addCreditReq richiesta per aggiungere il credito
 	 * @return l'utente dopo che gli è stato aggiunto il credito
 	 * @throws Exception in caso di errori

@@ -136,7 +136,7 @@ public class AuthController {
 					.build();
 			return ResponseEntity.ok(toReturn);
 		}catch(UserNotFoundException userNotFoundException) {
-			throw new UnauthorizedException("utente e/o password non validi");
+			throw new UnauthorizedException("utente e/o password non validi",userNotFoundException);
 		}
 	}
 }

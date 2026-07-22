@@ -220,8 +220,11 @@ public class UtenteImplementation implements IUtenteService {
 	@Override
 	public UtenteDTO addCredit(AddCreditReq addCredReq) throws Exception {
 		Integer userId = addCredReq.getUserId();
+		if(userId == null) {
+			throw new AcademyException("utente non fornito");
+		}
 		String secret = addCredReq.getSecret();
-		if(Objects.equals(secret,creditoSecret)){
+		if(!Objects.equals(secret,creditoSecret)){
 			throw new AcademyException("secret non valido");
 		}
 		Utente storedUser = repository.findById(userId)
@@ -240,7 +243,26 @@ public class UtenteImplementation implements IUtenteService {
 
 	@Override
 	public UtenteDTO addCreditByUser(AddCreditReq addCreditReq) throws Exception {
-		// TODO da capire come fare il filtraggio per l'utente loggato
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		Utente foundUser = null;
+		if(authentication != null) {
+			if(authentication.isAuthenticated()) {
+				String username = authentication.getName();
+				foundUser = repository.findByUsername(username).orElseThrow( () -> new UserNotFoundException("utente non trovato"));
+				Integer foundUserId = foundUser.getId();
+				addCreditReq.setUserId(Optional.ofNullable(addCreditReq).map(AddCreditReq::getUserId).orElse(foundUserId));
+				Integer requestUserId = addCreditReq.getUserId();
+				if(!Objects.equals(requestUserId,foundUserId)) {
+					Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+					boolean isAdmin = authorities.stream().map(t -> t.getAuthority()).anyMatch(t -> Objects.equals(t, "ROLE_"+Ruolo.ADMIN.name()));
+					if(!isAdmin) {
+						throw new ForbiddenException("utente non autorizzato");
+					}
+				}
+			}else {
+				throw new UnauthorizedException("utente non autorizzato");
+			}
+		}
 		return addCredit(addCreditReq);
 	}
 
@@ -294,8 +316,5 @@ public class UtenteImplementation implements IUtenteService {
 		
 		return storedUser;
 	}
-	
-	
-	
 
 }
