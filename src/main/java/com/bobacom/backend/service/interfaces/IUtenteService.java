@@ -38,7 +38,10 @@ public interface IUtenteService {
 	UtenteDTO update(UtenteReq req) throws Exception;
 	/**
 	 * Aggiornamento da parte dell'utente, ad esempio non consente di aggiornare il credito,
-	 * verifica che l'utente che aggiorna sia l'utente stesso
+	 * verifica che l'utente che aggiorna sia l'utente stesso.
+	 * <br/>
+	 * Per non invalidare il JWT, l'utente non può cambiare lo username, può essere fatto da amministratore purché non sia
+	 * l'amministratore stesso
 	 * @param req la richiesta con l'aggiornamento
 	 * @return l'utente appena aggiornato
 	 * @throws Exception in caso di errori

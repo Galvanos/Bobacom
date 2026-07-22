@@ -51,7 +51,7 @@ public class UtenteImplementation implements IUtenteService {
 	 */
 	@Getter
 	@Setter
-	@Value(value = "${credito.valoreDefault:0}")
+	@Value(value = "${app.credito.valoreDefault:0}")
 	private BigDecimal creditoDefault;
 	
 	
@@ -61,7 +61,7 @@ public class UtenteImplementation implements IUtenteService {
 	 * se non impostata nel file di properties viene lasciata come stringa vuota
 	 */
 	@Getter
-	@Value(value = "${credito.secret:}")
+	@Value(value = "${app.credito.secret:}")
 	private String creditoSecret;
 	
 	@Transactional
@@ -88,7 +88,7 @@ public class UtenteImplementation implements IUtenteService {
 		      .username(req.getUsername())
 		      .build();
 		utente = repository.save(utente);
-		//updateUtenteForAuthentication(req, null, encodedPassword);
+		updateUtenteForAuthentication(req, null, encodedPassword);
 		return UtenteDTO.builder()
 				.credito(utente.getCredito())
 				.email(utente.getEmail())
@@ -112,6 +112,7 @@ public class UtenteImplementation implements IUtenteService {
 	@Transactional
 	@Override
 	public UtenteDTO update(UtenteReq req) throws Exception {
+		//TODO verificare che l'utente loggato non stia cambiando il suo username  poiché nel JWT che sta usando c'é quello username
 		if(req == null) {
 			throw new AcademyException("utente non fornito");
 		}
@@ -129,11 +130,21 @@ public class UtenteImplementation implements IUtenteService {
 				if(alreadyExistsUsername) {
 					throw new AcademyException("username già esistente");
 				}else {
+					//verifico che l'utente non stia cambiando il suo stesso nome utente, il che sarebbe un problema per il JWT  già acquisito
+					Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+					if(authentication != null) {
+						if(authentication.isAuthenticated()) {
+							String authenticatedUsername = authentication.getName();
+							if(Objects.equals(formerUsername, authenticatedUsername)) {
+								throw new AcademyException("cambio username non consentito");
+							}
+						}
+					}
 					storedUser.setUsername(requestUsername);
 				}
 			}
 		}else {
-			//per updateUtenteForAuthentication devo forzare lo username
+			//per updateUtenteForAuthentication devo forzare lo username, probabilmente non servirà più
 			req.setUsername(formerUsername);
 		}
 		
@@ -152,10 +163,16 @@ public class UtenteImplementation implements IUtenteService {
 		
 		Utente updatedUser = repository.save(storedUser);
 		
-		//updateUtenteForAuthentication(req, formerUsername, encodedPassword);
+		updateUtenteForAuthentication(req, formerUsername, encodedPassword);
 		
-		//TODO riprendere qui
-		return UtenteDTO.builder().credito(updatedUser.getCredito())
+		return UtenteDTO.builder()
+				.credito(updatedUser.getCredito())
+				.email(updatedUser.getEmail())
+				.id(updatedUser.getId())
+				.indirizzo(updatedUser.getIndirizzo())
+				.password(updatedUser.getPassword())//in caso verrà annullata nel rest controller
+				.ruolo(updatedUser.getRuolo())
+				.username(updatedUser.getUsername())
 				.build();
 	}
 	
@@ -181,9 +198,10 @@ public class UtenteImplementation implements IUtenteService {
 				throw new ForbiddenException("utente non autorizzato");
 			}
 		}
-		//annullo credito e ruolo che un utente non può cambiarsi
+		//annullo credito, ruolo e username che un utente non può cambiarsi
 		req.setCredito(null);
 		req.setRuolo(null);
+		req.setUsername(null);//non viene consentito il cambio di username per non invalidare il JWT già acquisito
 		return update(req);
 	}
 
