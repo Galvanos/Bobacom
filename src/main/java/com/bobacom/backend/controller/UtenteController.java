@@ -1,8 +1,10 @@
 package com.bobacom.backend.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,23 +54,36 @@ public class UtenteController {
 	}
 	
 	@GetMapping("/user/getById")
-	public  ResponseEntity<UtenteDTO> getByUser(@RequestParam Integer id) throws Exception {
-		UtenteDTO byIdByUser = service.getByIdByUser(id);
-		byIdByUser.setPassword(null);//password annullata anche perché sarebbe un hash, non servirebbe a molto
-		return ResponseEntity.ok(byIdByUser);
+	public  ResponseEntity<UtenteDTO> getByUser(@RequestParam(required = false) Integer id,Authentication authentication) throws Exception {
+		String username = authentication.getName();
+		UtenteDTO foundUser;
+		if(id!=null) {
+			foundUser = service.getByIdByUser(id);
+		}else {
+			foundUser = service.getByUsernameByUser(username);
+		}
+		foundUser.setPassword(null);//password annullata anche perché sarebbe un hash, non servirebbe a molto
+		return ResponseEntity.ok(foundUser);
 	}
 	
 	
 	@GetMapping("/admin/getById")
-	public  ResponseEntity<UtenteDTO> getByAdmin(@RequestParam Integer id) throws Exception {
-		UtenteDTO byId = service.getById(id);
-		byId.setPassword(null);//password annullata anche perché sarebbe un hash, non servirebbe a molto
-		return ResponseEntity.ok(byId);
+	public  ResponseEntity<UtenteDTO> getByAdmin(@RequestParam(required = false) Integer id,Authentication authentication) throws Exception {
+		String username = authentication.getName();
+		UtenteDTO foundUser;
+		if(id!=null) {
+			foundUser = service.getById(id);
+		}else {
+			foundUser = service.getByUsername(username);
+		}
+		foundUser.setPassword(null);//password annullata anche perché sarebbe un hash, non servirebbe a molto
+		return ResponseEntity.ok(foundUser);
 	}
 	
 	
 	@GetMapping("/user/getByUsername")
-	public  ResponseEntity<UtenteDTO> getByUsernameByUser(@RequestParam String username) throws Exception {
+	public  ResponseEntity<UtenteDTO> getByUsernameByUser(@RequestParam(required = false) String username,Authentication authentication) throws Exception {
+		username = Optional.ofNullable(username).orElse(authentication.getName());
 		UtenteDTO byUsernameByUser = service.getByUsernameByUser(username);
 		byUsernameByUser.setPassword(null);//password annullata anche perché sarebbe un hash, non servirebbe a molto
 		return ResponseEntity.ok(byUsernameByUser);
@@ -76,7 +91,8 @@ public class UtenteController {
 	
 	
 	@GetMapping("/admin/getByUsername")
-	public  ResponseEntity<UtenteDTO> getByUsernameByAdmin(@RequestParam String username) throws Exception {
+	public  ResponseEntity<UtenteDTO> getByUsernameByAdmin(@RequestParam String username,Authentication authentication) throws Exception {
+		username = Optional.ofNullable(username).orElse(authentication.getName());
 		UtenteDTO byUsername = service.getByUsername(username);
 		byUsername.setPassword(null);//password annullata anche perché sarebbe un hash, non servirebbe a molto
 		return ResponseEntity.ok(byUsername);
@@ -91,13 +107,23 @@ public class UtenteController {
 	}
 	
 	@PatchMapping("/user/update")
-	public ResponseEntity<ResponseDTO> updateByUser(@RequestBody(required = true) @Validated(ValidationGroups.Update.class) UtenteReq  updatingUser) throws Exception{
+	public ResponseEntity<ResponseDTO> updateByUser(@RequestBody(required = true) @Validated(ValidationGroups.Update.class) UtenteReq  updatingUser,Authentication authentication) throws Exception{
+		String username = authentication.getName();
+		if(updatingUser.getId() == null) {
+			UtenteDTO byUsername = service.getByUsername(username);
+			updatingUser.setId(byUsername.getId());
+		}
 		UtenteDTO updatedUser = service.updateByUser(updatingUser);
 		return ResponseEntity.ok(new ResponseDTO("updated..."));
 	}
 	
 	@PatchMapping("/admin/update")
-	public ResponseEntity<ResponseDTO> updateByAdmin(@RequestBody(required = true) @Validated(ValidationGroups.Update.class) UtenteReq  updatingUser) throws Exception{
+	public ResponseEntity<ResponseDTO> updateByAdmin(@RequestBody(required = true) @Validated(ValidationGroups.Update.class) UtenteReq  updatingUser,Authentication authentication) throws Exception{
+		String username = authentication.getName();
+		if(updatingUser.getId() == null) {
+			UtenteDTO byUsername = service.getByUsername(username);
+			updatingUser.setId(byUsername.getId());
+		}
 		UtenteDTO updatedUser = service.update(updatingUser);
 		return ResponseEntity.ok(new ResponseDTO("updated..."));
 	}
