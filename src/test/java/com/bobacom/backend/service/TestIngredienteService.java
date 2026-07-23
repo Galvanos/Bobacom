@@ -116,6 +116,17 @@ public class TestIngredienteService {
 	}
 	@Order(4)
 	@Test
+	void getByIdTest() throws Exception{
+		try {
+			mockMvc.perform(get("/rest/ingrediente/getById")
+					.contentType(MediaType.APPLICATION_JSON)
+					).andExpect(status().isOk()).andExpect(jsonPath("$").isArray());
+		} catch (Exception e) {
+			log.error("Error nell' update di un ingrediente: {}", e.getMessage());
+		}
+	}
+	@Order(5)
+	@Test
 	void listTest() throws Exception{
 		try {
 			mockMvc.perform(get("/rest/ingrediente/list")

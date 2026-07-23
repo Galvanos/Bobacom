@@ -116,8 +116,8 @@ public class ProdottoImplementation implements IProdottoService{
 	}
 
 	@Override
-	public List<ProdottoDTO> list() throws Exception {
-		List <Prodotto> lP = prodottoRep.findAll(Sort.by("nome"));
+	public List<ProdottoDTO> list(String tag, Boolean isActive) throws Exception {
+		List <Prodotto> lP = prodottoRep.searchByFilter(tag, isActive);
 		return ProdottoMap.buildProdottoDTOList(lP);
 	}
 

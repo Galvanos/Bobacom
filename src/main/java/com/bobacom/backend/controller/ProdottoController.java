@@ -51,8 +51,9 @@ public class ProdottoController {
 	}
 	
 	@GetMapping("/list")
-	public ResponseEntity<Object> list() throws Exception{
-		return ResponseEntity.ok(prodottoS.list());
+	public ResponseEntity<Object> list(	@RequestParam (required = false) String tag,
+										@RequestParam (required = false) Boolean hasDiscount) throws Exception{
+		return ResponseEntity.ok(prodottoS.list(tag, hasDiscount));
 	}
 	
 	@GetMapping("getById")
