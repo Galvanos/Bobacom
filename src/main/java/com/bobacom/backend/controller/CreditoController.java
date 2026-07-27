@@ -26,7 +26,13 @@ public class CreditoController {
 	private final IUtenteService utenteService;
 	
 	@PatchMapping("/user/addCredito")
-	public ResponseEntity<UtenteDTO> addCreditoByUser(@RequestBody AddCreditReq req) throws Exception{
+	public ResponseEntity<UtenteDTO> addCreditoByUser(@RequestBody AddCreditReq req,Authentication authentication) throws Exception{
+		Integer userId = req.getUserId();
+		if(userId == null) {
+			UtenteDTO byUsername = utenteService.getByUsername(authentication.getName());
+			userId = byUsername.getId();
+			req.setUserId(userId);
+		}
 		UtenteDTO updatedUtenteDTO = utenteService.addCreditByUser(req);
 		UtenteDTO toReturn = UtenteDTO.builder()
 				.credito(updatedUtenteDTO.getCredito())
@@ -38,7 +44,13 @@ public class CreditoController {
 	
 	
 	@PatchMapping("/admin/addCredito")
-	public ResponseEntity<UtenteDTO> addCreditoByAdmin(@RequestBody AddCreditReq req) throws Exception{
+	public ResponseEntity<UtenteDTO> addCreditoByAdmin(@RequestBody AddCreditReq req,Authentication authentication) throws Exception{
+		Integer userId = req.getUserId();
+		if(userId == null) {
+			UtenteDTO byUsername = utenteService.getByUsername(authentication.getName());
+			userId = byUsername.getId();
+			req.setUserId(userId);
+		}
 		UtenteDTO updatedUtenteDTO = utenteService.addCredit(req);
 		UtenteDTO toReturn = UtenteDTO.builder()
 				.credito(updatedUtenteDTO.getCredito())
