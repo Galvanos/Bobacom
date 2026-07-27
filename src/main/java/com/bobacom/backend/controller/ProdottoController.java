@@ -32,7 +32,6 @@ public class ProdottoController {
 			.msg("created...")
 			.build());
 	}
-	
 
 	@PutMapping("update")
 	public ResponseEntity<ResponseDTO> update(@RequestBody (required = true) ProdottoRequest req)  throws Exception{
@@ -60,6 +59,4 @@ public class ProdottoController {
 	public ResponseEntity<Object> getById(@RequestParam (required = true) Integer id) throws Exception{			
 		return ResponseEntity.ok(prodottoS.getById(id));
 	}
-
-
 }
