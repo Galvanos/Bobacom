@@ -1,12 +1,10 @@
 package com.bobacom.backend.service;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
@@ -21,16 +19,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import com.bobacom.backend.dto.input.ComposizioneReq;
 import com.bobacom.backend.dto.input.ProdottoRequest;
-import com.bobacom.backend.dto.input.TagProdottoReq;
-import com.bobacom.backend.model.Composizione;
-import com.bobacom.backend.model.TagProdotto;
 
 import lombok.extern.slf4j.Slf4j;
-import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
@@ -57,8 +50,8 @@ public class ProdottoImplementationTest {
 		req.setImgUrl("BobaImgUrl");
 		
 		//La composizione è obbligatoria
-		List<Composizione> compList = new ArrayList<>();
-		compList.add(new Composizione());
+		List<ComposizioneReq> compList = new ArrayList<>();
+		compList.add(new ComposizioneReq());
 		req.setComposizione(compList);
 		
 		req.setPromozione(null);
@@ -122,8 +115,8 @@ public class ProdottoImplementationTest {
 		req.setDescrizione("DescrizioneAggiornata");
 		req.setImgUrl("UrlAggiornato");
 		
-		List<Composizione> compList = new ArrayList<>();
-		compList.add(new Composizione()); 
+		List<ComposizioneReq> compList = new ArrayList<>();
+		compList.add(new ComposizioneReq()); 
 		req.setComposizione(compList); 
 		
 		req.setPromozione(null);
