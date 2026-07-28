@@ -1,7 +1,10 @@
 package com.bobacom.backend.model;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.HashSet;
+
 
 import com.bobacom.backend.enums.StatoSpedizione;
 
@@ -9,12 +12,14 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,8 +55,25 @@ public class Ordine {
 	private StatoSpedizione status;
 	
 	@Column(name="data_creazione", nullable = false)
-	private LocalDate dataCreazione;
+	private LocalDateTime dataCreazione;
 	
 	@Column(name="indirizzo_destinazione", nullable = false)
 	private String indirizzoDestinazione;
+	
+	@Builder.Default
+	@OneToMany(mappedBy = "ordine",
+			fetch = FetchType.EAGER)
+	Set<OrdineProdotto> ordineProdotti = new HashSet<OrdineProdotto>();
+	
+	public void addOrdineProdotto(OrdineProdotto ordineProdotti) {
+        this.ordineProdotti.add(ordineProdotti); 
+    }
+
+    public void removeOrdineProdotto(OrdineProdotto ordineProdotti) {
+        this.ordineProdotti.remove(ordineProdotti);
+    }
+
+    public Set<OrdineProdotto> getOrdineProdotto() {
+        return ordineProdotti;
+    }
 }

@@ -30,7 +30,7 @@ public class IngredienteImplementation implements IIngredienteService{
 	private final IIngredienteRepository ingredienteRepo;
 	private final ICategoriaRepository categoriaRepo;
 	private final IAllergeniRepository allergeniRepo;
-
+ 
 	@Transactional
 	@Override
 	public void create(IngredienteRequest req) throws Exception{
@@ -84,12 +84,4 @@ public class IngredienteImplementation implements IIngredienteService{
 		
 		return ingredienteList.stream().map(i -> IngredienteMap.buildIngredienteDTO(i)).collect(Collectors.toList());
 	}
-	@Override
-	public IngredienteDTO getById(Integer id) throws Exception {
-		return  IngredienteMap.buildIngredienteDTO(ingredienteRepo.findById(id).orElseThrow(
-				() -> new AcademyException()));
-	}
-	
-	
-	
 }

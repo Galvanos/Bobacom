@@ -1,6 +1,9 @@
 package com.bobacom.backend.dto.input;
 
 import java.util.List;
+
+import com.bobacom.backend.model.TagProdotto;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,13 +15,10 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProdottoRequest {
+public class TagProdottoReq {
 	private Integer id;
 	private String nome;
 	private String descrizione;
-	private String imgUrl;
-	private List<Integer> tag;
-	private List<Integer> promozione;
-	private List<ComposizioneReq> composizione;
-
+	List <TagProdotto> tag;
 }
+

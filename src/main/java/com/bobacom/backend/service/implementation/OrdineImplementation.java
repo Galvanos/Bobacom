@@ -1,15 +1,20 @@
 package com.bobacom.backend.service.implementation;
 
+import java.time.LocalDateTime;
+
 import org.springframework.stereotype.Service;
 
+import com.bobacom.backend.component.Carrello;
+import com.bobacom.backend.component.CartItem;
 import com.bobacom.backend.dto.input.OrdineRequest;
 import com.bobacom.backend.enums.StatoSpedizione;
 import com.bobacom.backend.model.Ordine;
+import com.bobacom.backend.model.OrdineProdotto;
 import com.bobacom.backend.model.Utente;
+import com.bobacom.backend.repository.IOrdineProdottoRepository;
 import com.bobacom.backend.repository.IOrdineRepository;
 import com.bobacom.backend.repository.IUtenteRepository;
 import com.bobacom.backend.service.interfaces.IOrdineService;
-import com.bobacom.backend.utilities.DateOperations;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +26,9 @@ import lombok.extern.slf4j.Slf4j;
 public class OrdineImplementation implements IOrdineService{
 	private final IUtenteRepository utenteRepo;
 	private final IOrdineRepository ordineRepo;
+	private final IOrdineProdottoRepository opRepo;
+	
+	private final Carrello cart;
 
 	@Transactional
 	@Override
@@ -31,23 +39,26 @@ public class OrdineImplementation implements IOrdineService{
 				
 		Ordine ordine = Ordine.builder()
 				.prezzoTotale(req.getPrezzoTotale())
-				.dataCreazione(DateOperations.stringToDate(req.getDataCreazione()))
+				.dataCreazione(LocalDateTime.now())
 				.indirizzoDestinazione(req.getIndirizzoDestinazione())
 				.utente(utente)
 				.build();
 		
-		if(req.getStatus() != null) {
-			try {
-				StatoSpedizione stato = StatoSpedizione.valueOf(req.getStatus().toUpperCase().trim());
-				ordine.setStatus(stato);
-			} catch (Exception e) {
-				throw new Exception("Invalid status value: " + req.getStatus());
-			}
-		}
+
 		utente.addOrdine(ordine);
+		ordine = ordineRepo.save(ordine);
 		
-		ordineRepo.save(ordine);
+		for(CartItem c : cart.getItems()) {
+			OrdineProdotto op =opRepo.save(OrdineProdotto.builder()
+					.ordine(ordine)
+					.prodotto(c.getProdotto())
+					.quantita(c.getQuantita())
+					.prezzo(c.getPrezzo())
+					.build());
+		}
+			
 		log.debug("ordine: {}", ordine);
+		cart.svuotaCarrello();
 		
 	}
 
