@@ -1,5 +1,6 @@
 package com.bobacom.backend.service.implementation;
 
+import com.bobacom.backend.controller.AuthController;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,8 +14,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bobacom.backend.dto.input.AddCreditReq;
@@ -23,6 +25,9 @@ import com.bobacom.backend.dto.output.UtenteDTO;
 import com.bobacom.backend.enums.Ruolo;
 import com.bobacom.backend.exceptions.AcademyException;
 import com.bobacom.backend.exceptions.ForbiddenException;
+import com.bobacom.backend.exceptions.UnauthorizedException;
+import com.bobacom.backend.exceptions.UserNotFoundException;
+import com.bobacom.backend.mapping.UtenteMap;
 import com.bobacom.backend.model.Utente;
 import com.bobacom.backend.repository.IUtenteRepository;
 import com.bobacom.backend.service.interfaces.IUtenteService;
@@ -32,14 +37,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+@Service
 @RequiredArgsConstructor
 @Slf4j
 public class UtenteImplementation implements IUtenteService {
 
+
 	private final IUtenteRepository repository;
 	
-	private final PasswordEncoder getPasswordEncoder;
-	private final InMemoryUserDetailsManager inMemoryUserDetailsManager;
+	private final PasswordEncoder passwordEncoder;
 	
 	
 	/**
@@ -49,9 +55,9 @@ public class UtenteImplementation implements IUtenteService {
 	 */
 	@Getter
 	@Setter
-	@Value(value = "${credito.valoreDefault:0}")
+	@Value(value = "${app.credito.valoreDefault:0}")
 	private BigDecimal creditoDefault;
-	
+
 	
 	/**
 	 * Valore inserito per simulare una transazione sicura per aggiungere il credito, 
@@ -59,8 +65,10 @@ public class UtenteImplementation implements IUtenteService {
 	 * se non impostata nel file di properties viene lasciata come stringa vuota
 	 */
 	@Getter
-	@Value(value = "${credito.secret:}")
+	@Value(value = "${app.credito.secret:}")
 	private String creditoSecret;
+
+	
 	
 	@Transactional
 	@Override
@@ -76,7 +84,7 @@ public class UtenteImplementation implements IUtenteService {
 		if(alreadyExistsUsername) {
 			throw new AcademyException("username già esistente");
 		}
-		String encodedPassword = getPasswordEncoder.encode(req.getPassword());
+		String encodedPassword = passwordEncoder.encode(req.getPassword());
 		Utente utente = Utente.builder()
 		      .credito(req.getCredito())
 		      .email(req.getEmail())
@@ -86,16 +94,8 @@ public class UtenteImplementation implements IUtenteService {
 		      .username(req.getUsername())
 		      .build();
 		utente = repository.save(utente);
-		updateUtenteForAuthentication(req, null, encodedPassword);
-		return UtenteDTO.builder()
-				.credito(utente.getCredito())
-				.email(utente.getEmail())
-				.id(utente.getId())
-				.indirizzo(utente.getIndirizzo())
-				.password(utente.getPassword())//in caso verrà annullata nel rest controller
-				.ruolo(utente.getRuolo())
-				.username(utente.getUsername())
-				.build();
+		
+		return UtenteMap.buildUtenteDTO(utente, false);
 	}
 	
 
@@ -118,7 +118,7 @@ public class UtenteImplementation implements IUtenteService {
 			throw new AcademyException("id utente non fornito");
 		}
 		Utente storedUser = repository.findById(id)
-				.orElseThrow(() -> new AcademyException("utente non trovato"));
+				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
 		String formerUsername = storedUser.getUsername();
 		String requestUsername = req.getUsername();
 		if(requestUsername != null) {
@@ -127,11 +127,21 @@ public class UtenteImplementation implements IUtenteService {
 				if(alreadyExistsUsername) {
 					throw new AcademyException("username già esistente");
 				}else {
+					//verifico che l'utente non stia cambiando il suo stesso nome utente, il che sarebbe un problema per il JWT  già acquisito
+					Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+					if(authentication != null) {
+						if(authentication.isAuthenticated()) {
+							String authenticatedUsername = authentication.getName();
+							if(Objects.equals(formerUsername, authenticatedUsername)) {
+								throw new AcademyException("cambio username non consentito");
+							}
+						}
+					}
 					storedUser.setUsername(requestUsername);
 				}
 			}
 		}else {
-			//per updateUtenteForAuthentication devo forzare lo username
+			//per updateUtenteForAuthentication devo forzare lo username, probabilmente non servirà più
 			req.setUsername(formerUsername);
 		}
 		
@@ -139,7 +149,7 @@ public class UtenteImplementation implements IUtenteService {
 		
 		String password = req.getPassword();
 		if(password != null) {
-			encodedPassword = getPasswordEncoder.encode(password);
+			encodedPassword = passwordEncoder.encode(password);
 			storedUser.setPassword(encodedPassword);
 		}
 		
@@ -150,11 +160,7 @@ public class UtenteImplementation implements IUtenteService {
 		
 		Utente updatedUser = repository.save(storedUser);
 		
-		updateUtenteForAuthentication(req, formerUsername, encodedPassword);
-		
-		//TODO riprendere qui
-		return UtenteDTO.builder().credito(updatedUser.getCredito())
-				.build();
+		return UtenteMap.buildUtenteDTO(updatedUser, false);
 	}
 	
 	@Override
@@ -175,30 +181,21 @@ public class UtenteImplementation implements IUtenteService {
 					throw new ForbiddenException("utente non autorizzato");
 				}
 			}else {
-				//idealmente si dovrebbe mettere unauthorized anziché forbidden
-				throw new ForbiddenException("utente non autorizzato");
+				throw new UnauthorizedException("utente non autorizzato");
 			}
 		}
-		//annullo credito e ruolo che un utente non può cambiarsi
+		//annullo credito, ruolo e username che un utente non può cambiarsi
 		req.setCredito(null);
 		req.setRuolo(null);
+		req.setUsername(null);//non viene consentito il cambio di username per non invalidare il JWT già acquisito
 		return update(req);
 	}
 
 	@Override
 	public UtenteDTO getById(Integer id) throws Exception {
 		Utente storedUser = repository.findById(id)
-				.orElseThrow(() -> new AcademyException("utente non trovato"));
-		
-		return UtenteDTO.builder()
-				.credito(storedUser.getCredito())
-				.email(storedUser.getEmail())
-				.id(storedUser.getId())
-				.indirizzo(storedUser.getIndirizzo())
-				.password(storedUser.getPassword())//si tiene l'hash della password per poter usare il risultato di questo metodo in altri contesti, sarà cura del restcontroller annullarla
-				.ruolo(storedUser.getRuolo())
-				.username(storedUser.getUsername())
-				.build();
+				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
+		return UtenteMap.buildUtenteDTO(storedUser, false);
 		
 	}
 
@@ -206,24 +203,16 @@ public class UtenteImplementation implements IUtenteService {
 	public List<UtenteDTO> list() throws Exception {
 		List<Utente> users = repository.findAll();
 		users = Optional.ofNullable(users).orElse(Collections.emptyList());
-		return users.stream().map(storedUser -> 
-			 UtenteDTO.builder()
-					.credito(storedUser.getCredito())
-					.email(storedUser.getEmail())
-					.id(storedUser.getId())
-					.indirizzo(storedUser.getIndirizzo())
-					.password(storedUser.getPassword())//si tiene l'hash della password perché serve in creazione utenti inmemory, ma nel rest controller va annullata
-					.ruolo(storedUser.getRuolo())
-					.username(storedUser.getUsername())
-					.build()
-		).toList();
+		return UtenteMap.buildUtenteDTOList(users, false);
 	}
 
+
 	@Override
-	public void delete(Integer id) throws Exception {
+	public UtenteDTO delete(Integer id) throws Exception {
 		Utente storedUser = repository.findById(id)
-				.orElseThrow(() -> new AcademyException("utente non trovato"));
+				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
 		repository.delete(storedUser);
+		return UtenteMap.buildUtenteDTO(storedUser, false);
 		
 	}
 
@@ -231,12 +220,15 @@ public class UtenteImplementation implements IUtenteService {
 	@Override
 	public UtenteDTO addCredit(AddCreditReq addCredReq) throws Exception {
 		Integer userId = addCredReq.getUserId();
+		if(userId == null) {
+			throw new AcademyException("utente non fornito");
+		}
 		String secret = addCredReq.getSecret();
-		if(Objects.equals(secret,creditoSecret)){
+		if(!Objects.equals(secret,creditoSecret)){
 			throw new AcademyException("secret non valido");
 		}
 		Utente storedUser = repository.findById(userId)
-				.orElseThrow(() -> new AcademyException("utente non trovato"));
+				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
 		BigDecimal credito = storedUser.getCredito();
 		if(credito == null) {
 			credito = BigDecimal.ZERO;
@@ -245,21 +237,32 @@ public class UtenteImplementation implements IUtenteService {
 		BigDecimal resultingCredit = credito.add(addingCredit);
 		storedUser.setCredito(resultingCredit);
 		storedUser = repository.save(storedUser);
-		return UtenteDTO.builder()
-				.credito(storedUser.getCredito())
-				.email(storedUser.getEmail())
-				.id(storedUser.getId())
-				.indirizzo(storedUser.getIndirizzo())
-				.password(storedUser.getPassword())//si tiene l'hash della password, sarà cura dei rest controller annullarla
-				.ruolo(storedUser.getRuolo())
-				.username(storedUser.getUsername())
-				.build();
+		return UtenteMap.buildUtenteDTO(storedUser, false);
 	}
 
 
 	@Override
 	public UtenteDTO addCreditByUser(AddCreditReq addCreditReq) throws Exception {
-		// TODO da capire come fare il filtraggio per l'utente loggato
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		Utente foundUser = null;
+		if(authentication != null) {
+			if(authentication.isAuthenticated()) {
+				String username = authentication.getName();
+				foundUser = repository.findByUsername(username).orElseThrow( () -> new UserNotFoundException("utente non trovato"));
+				Integer foundUserId = foundUser.getId();
+				addCreditReq.setUserId(Optional.ofNullable(addCreditReq).map(AddCreditReq::getUserId).orElse(foundUserId));
+				Integer requestUserId = addCreditReq.getUserId();
+				if(!Objects.equals(requestUserId,foundUserId)) {
+					Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+					boolean isAdmin = authorities.stream().map(t -> t.getAuthority()).anyMatch(t -> Objects.equals(t, "ROLE_"+Ruolo.ADMIN.name()));
+					if(!isAdmin) {
+						throw new ForbiddenException("utente non autorizzato");
+					}
+				}
+			}else {
+				throw new UnauthorizedException("utente non autorizzato");
+			}
+		}
 		return addCredit(addCreditReq);
 	}
 
@@ -278,35 +281,40 @@ public class UtenteImplementation implements IUtenteService {
 					throw new ForbiddenException("utente non autorizzato");
 				}
 			}else {
-				//idealmente si dovrebbe mettere unauthorized anziché forbidden
-				throw new ForbiddenException("utente non autorizzato");
+				throw new UnauthorizedException("utente non autorizzato");
 			}
 		}
 		return storedUser;
 	}
-	
-	/**
-	 * Aggiorna o crea le informazioni utente assiciate a {@link #inMemoryUserDetailsManager}
-	 * @param req la richiesta con i nuovi dati dell'utente
-	 * @param formerUsername nome utente precedente che verrà eventualmente eliminato, 
-	 *        se null lo prende da {@code req}{@link UtenteReq#getUsername()}
-	 * @param encodedPassword password codificata da inserire, 
-	 * 		  se null recupera {@code req}{@link UtenteReq#getPassword()} e la codifica usando {@link #getPasswordEncoder}
-	 */
-	public void updateUtenteForAuthentication(UtenteReq req, String formerUsername, String encodedPassword) {
-		formerUsername = Optional.ofNullable(formerUsername).orElse(req.getUsername());
-		if (inMemoryUserDetailsManager.userExists(formerUsername)) {
-			inMemoryUserDetailsManager.deleteUser(formerUsername);
-			log.debug("utente {} deleted", req.getUsername());
+
+	@Override
+	public UtenteDTO getByUsername(String username) throws Exception {
+		Utente storedUser = repository.findByUsername(username)
+				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
+		
+		return UtenteMap.buildUtenteDTO(storedUser, false);
+		
+	}
+
+	@Override
+	public UtenteDTO getByUsernameByUser(String username) throws Exception {
+		UtenteDTO storedUser = getByUsername(username);
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if(authentication != null) {
+			if(authentication.isAuthenticated()) {
+				String authenticatedUsername = authentication.getName();
+				Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+				boolean isAdmin = authorities.stream().map(t -> t.getAuthority()).anyMatch(t -> Objects.equals(t, "ROLE_"+Ruolo.ADMIN.name()));
+				boolean differentUsername = !Objects.equals(authenticatedUsername, storedUser.getUsername());
+				if(!isAdmin && differentUsername) {
+					throw new ForbiddenException("utente non autorizzato");
+				}
+			}else {
+				throw new UnauthorizedException("utente non autorizzato");
+			}
 		}
-		encodedPassword = Optional.ofNullable(encodedPassword).orElseGet(() -> getPasswordEncoder.encode(req.getPassword()));
-		inMemoryUserDetailsManager.createUser(User
-				.withUsername(req.getUsername())
-				.password(encodedPassword)
-				.roles(req.getRuolo().toString())
-				.build()
-				);
-		log.debug("User {} is created", req.getUsername());
+		
+		return storedUser;
 	}
 
 }

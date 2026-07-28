@@ -1,6 +1,5 @@
 package com.bobacom.backend.dto.output;
 
-import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +17,4 @@ public class ComposizioneDTO {
 	private ProdottoDTO prodotto;
 	private IngredienteDTO ingrediente;
 	private Integer quantita;
-	
-
 }

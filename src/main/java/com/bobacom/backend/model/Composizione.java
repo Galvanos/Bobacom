@@ -43,7 +43,5 @@ public class Composizione {
 	
 	@Column(name="quantita")
 	private Integer quantita;
-	
-	
 
 }

@@ -2,6 +2,7 @@ package com.bobacom.backend.dto.output;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 import com.bobacom.backend.enums.Ruolo;
 import com.bobacom.backend.model.Composizione;
@@ -36,4 +37,8 @@ public class UtenteDTO {
 	private Ruolo ruolo;
 	private BigDecimal credito;
 	private String indirizzo;
+	/**
+	 * Ordini ricevuti, ordinati per data
+	 */
+	private List<OrdineDTO> ordini;
 }

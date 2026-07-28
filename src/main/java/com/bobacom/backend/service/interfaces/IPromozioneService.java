@@ -7,9 +7,8 @@ import com.bobacom.backend.dto.output.PromozioneDTO;
 
 public interface IPromozioneService {
 	void create(PromozioneRequest req) throws Exception;
-	void update(PromozioneRequest req);
-	void delete(Integer id);
-	
+	void update(PromozioneRequest req) throws Exception;
+	void delete(Integer id) throws Exception;
 	List<PromozioneDTO> list() throws Exception;
 	PromozioneDTO getById(Integer id) throws Exception;
 }

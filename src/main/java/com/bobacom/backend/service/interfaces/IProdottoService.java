@@ -10,7 +10,7 @@ public interface IProdottoService {
 	void update(ProdottoRequest req);
 	void delete(Integer id);
 	
-	List<ProdottoDTO> list() throws Exception;
+	List<ProdottoDTO> list(String tag, Boolean isActive) throws Exception;
 	ProdottoDTO getById(Integer id) throws Exception;
 
 }

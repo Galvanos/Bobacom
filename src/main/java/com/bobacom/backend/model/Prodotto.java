@@ -42,8 +42,8 @@ public class Prodotto {
 	@Column(name="img_url")
 	private String imgUrl;			// url immagine, da usare in UI
 	
-	@ManyToMany (fetch = FetchType.EAGER)	// attenzione che essendo mappata anche dall'altra parte 
-	@JoinTable(								// potrebbe volerci la cancellazione manuale di entrambi
+	@ManyToMany (fetch = FetchType.EAGER)	
+	@JoinTable(								
 			name="prodotto_tag",
 			joinColumns = @JoinColumn (name = "prodotto_id" ),
 			inverseJoinColumns = @JoinColumn (name = "tag_id")
@@ -66,4 +66,8 @@ public class Prodotto {
 			)
 	private List<Composizione> composizione;	// lista di elementi "composizione" che ognuno contengono
 												//  un'ingrediente e la relativa quantitá
+	public void addComposizione(Composizione comp) {
+		composizione.add(comp);
+		comp.setProdotto(this);
+	}
 }

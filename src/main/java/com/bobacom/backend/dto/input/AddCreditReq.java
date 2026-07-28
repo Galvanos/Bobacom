@@ -3,6 +3,8 @@ package com.bobacom.backend.dto.input;
 import java.math.BigDecimal;
 
 import com.bobacom.backend.enums.Ruolo;
+import com.bobacom.backend.service.implementation.UtenteImplementation;
+import com.bobacom.backend.service.interfaces.IUtenteService;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,7 +34,7 @@ public class AddCreditReq {
 	 */
 	private BigDecimal credit;
 	/**
-	 * Valore di sicurezza per impedire chiamate a caso, deve corrispondere a (TODO definire il campo)
+	 * Valore di sicurezza per impedire chiamate a caso, deve corrispondere a {@link UtenteImplementation#creditoSecret}
 	 */
 	private String secret;
 }

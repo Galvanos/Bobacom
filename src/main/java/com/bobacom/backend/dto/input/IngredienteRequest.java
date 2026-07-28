@@ -20,7 +20,7 @@ import lombok.Setter;
 public class IngredienteRequest {
 	@NotNull(groups = ValidationGroups.Update.class, message = "id ingrediente non fornito")
 	private Integer id;
-	@NotNull(groups = ValidationGroups.Create.class, message = "id ingrediente non fornito")
+	@NotNull(groups = ValidationGroups.Create.class, message = "nome ingrediente non fornito")
 	private String nome;
 	@NotNull(groups = ValidationGroups.Create.class, message = "descrizione non fornita")
 	private String descrizione;
