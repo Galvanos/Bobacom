@@ -21,13 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bobacom.backend.dto.input.AddCreditReq;
 import com.bobacom.backend.dto.input.UtenteReq;
+import com.bobacom.backend.dto.map.UtenteMap;
 import com.bobacom.backend.dto.output.UtenteDTO;
 import com.bobacom.backend.enums.Ruolo;
 import com.bobacom.backend.exceptions.AcademyException;
 import com.bobacom.backend.exceptions.ForbiddenException;
 import com.bobacom.backend.exceptions.UnauthorizedException;
 import com.bobacom.backend.exceptions.UserNotFoundException;
-import com.bobacom.backend.mapping.UtenteMap;
 import com.bobacom.backend.model.Utente;
 import com.bobacom.backend.repository.IUtenteRepository;
 import com.bobacom.backend.service.interfaces.IUtenteService;
