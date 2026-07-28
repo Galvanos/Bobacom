@@ -37,13 +37,13 @@ public class OrdineProdotto {
 			)
 	private Ordine ordine;
 	
-	@OneToOne()
+	@ManyToOne()
 	@JoinColumn(
 			name="prodotto_id",
 			referencedColumnName = "id",
 			foreignKey = @ForeignKey(name ="fk_prodotto_ordine")
 			)
-	private Prodotto prodotto; 
+	private Prodotto prodotto;
 	
 	@Column
 	private Integer quantita;
