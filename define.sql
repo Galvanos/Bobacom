@@ -82,12 +82,14 @@
 
     create table prodotto_promozione (
         prodotto_id integer not null,
-        promozione_id integer not null
+        promozione_id integer not null,
+        primary key (prodotto_id, promozione_id)
     );
 
     create table prodotto_tag (
         prodotto_id integer not null,
-        tag_id integer not null
+        tag_id integer not null,
+        primary key (prodotto_id, tag_id)
     );
 
     create table promozione (

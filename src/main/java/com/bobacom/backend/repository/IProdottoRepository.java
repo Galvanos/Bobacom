@@ -12,10 +12,10 @@ public interface IProdottoRepository extends JpaRepository<Prodotto, Integer>{
 	@Query(
 			value = """
 					select distinct p from Prodotto p
-						left join p.promozione promozione
-							on (:isActive is null or promozione.isActive = :isActive)
-							left join p.tag tag
-								where(:tag is null or tag.nome = :tag)
+						left join FETCH p.promozione promozione
+						left join FETCH p.tag tag
+							where(:tag is null or tag.nome = :tag)
+							and (:isActive is null or promozione.isActive = :isActive)							
 					""")
 	List<Prodotto> searchByFilter(	@Param("tag") String tag,
 									@Param("isActive") Boolean isActive);

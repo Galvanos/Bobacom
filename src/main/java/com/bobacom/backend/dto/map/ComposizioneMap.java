@@ -20,7 +20,7 @@ public class ComposizioneMap {
 	public static ComposizioneDTO buildComposizioneDTO(Composizione c) {
 	    return ComposizioneDTO.builder()
 	            .id(c.getId())
-	            .prodotto(ProdottoMap.buildProdottoDTO(c.getProdotto())) 
+	            .idProdotto(c.getProdotto().getId())
 	            .ingrediente(IngredienteMap.buildIngredienteDTO(c.getIngrediente())) 
 	            .quantita(c.getQuantita())
 	            .build();

@@ -22,7 +22,7 @@ public class PromozioneMap {
 	            .id(p.getId())
 	            .sconto(p.getSconto())
 	            .isActive(p.getIsActive())
-	            .prodotto(ProdottoMap.buildProdottoDTOList(p.getProdotto())) 
+	            .idProdotto(p.getProdotto().stream().map(pr -> pr.getId()).toList()) 
 	            .build();
 	}
 

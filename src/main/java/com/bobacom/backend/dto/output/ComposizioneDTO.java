@@ -14,7 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ComposizioneDTO {
 	private Integer id;
-	private ProdottoDTO prodotto;
+	private Integer idProdotto;
 	private IngredienteDTO ingrediente;
 	private Integer quantita;
 }

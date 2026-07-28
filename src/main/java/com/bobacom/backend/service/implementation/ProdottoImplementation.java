@@ -3,15 +3,16 @@ package com.bobacom.backend.service.implementation;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bobacom.backend.dto.input.ComposizioneReq;
 import com.bobacom.backend.dto.input.ProdottoRequest;
+import com.bobacom.backend.dto.map.ProdottoMap;
 import com.bobacom.backend.dto.output.ProdottoDTO;
 import com.bobacom.backend.exceptions.AcademyException;
-import com.bobacom.backend.mapping.ProdottoMap;
 import com.bobacom.backend.model.Composizione;
 import com.bobacom.backend.model.Ingrediente;
 import com.bobacom.backend.model.Prodotto;
@@ -39,7 +40,7 @@ public class ProdottoImplementation implements IProdottoService{
 	@Transactional
 	@Override
 	public void create(ProdottoRequest req) throws Exception {
-		log.debug("create: {}", req);
+		log.debug("create: {}", req.toString());
 		List<Promozione> promos = req.getPromozione().stream().map(id -> promoRepo.findById(id).orElseThrow(
 				() -> new AcademyException("no such promozione with id:" + id))).toList();
 		List<TagProdotto> tags = req.getTag().stream().map(id -> tagRepo.findById(id).orElseThrow(
@@ -64,8 +65,8 @@ public class ProdottoImplementation implements IProdottoService{
 		        .map(String::toUpperCase)
 		        .orElseThrow(() -> new AcademyException("prodotto.no.imgurl")));
 		
-		p.setTag(tags); 
-	    p.setPromozione(promos);
+		p.setTag(tags.stream().collect(Collectors.toSet())); 
+	    p.setPromozione(promos.stream().collect(Collectors.toSet()));
 	    
 	    for(ComposizioneReq compReq : req.getComposizione()) {
 	    	Ingrediente ingrediente = ingRepo.findById(compReq.getIdIngrediente()).orElseThrow(
@@ -74,7 +75,8 @@ public class ProdottoImplementation implements IProdottoService{
 	    	p.addComposizione(composizione);
 	    }
 
-	    prodottoRep.save(p);		
+	    p = prodottoRep.save(p);
+	    log.debug("prodotto creato: {}", p.getId());
 	}
 
 	@Transactional
@@ -106,12 +108,12 @@ public class ProdottoImplementation implements IProdottoService{
 		if(req.getTag() !=null) {
 			List<TagProdotto> tags = req.getTag().stream().map(id -> tagRepo.findById(id).orElseThrow(
 					() -> new AcademyException("no such tag with id:" + id))).toList();
-			p.setTag(tags);
+			p.setTag(tags.stream().collect(Collectors.toSet()));
 		}
 		if(req.getPromozione() !=null) {
 			List<Promozione> promos = req.getPromozione().stream().map(id -> promoRepo.findById(id).orElseThrow(
 					() -> new AcademyException("no such promozione with id:" + id))).toList();
-			p.setPromozione(promos);
+			p.setPromozione(promos.stream().collect(Collectors.toSet()));
 			}
 	    
 	    if (req.getComposizione() != null){ 
@@ -146,8 +148,9 @@ public class ProdottoImplementation implements IProdottoService{
 
 	@Override
 	public List<ProdottoDTO> list(String tag, Boolean isActive) throws Exception {
+		log.debug("entered prodotto list with args: {} - {}", tag, isActive);
 		List <Prodotto> lP = prodottoRep.searchByFilter(tag, isActive);
-		return ProdottoMap.buildProdottoDTOList(lP);
+		return ProdottoMap.buildProdottoDTOList(lP.stream().collect(Collectors.toSet()));
 	}
 
 	@Override

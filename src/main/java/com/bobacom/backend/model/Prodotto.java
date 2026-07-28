@@ -1,7 +1,9 @@
 package com.bobacom.backend.model;
 
-
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -17,11 +19,13 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
-@Builder
+@Slf4j
 @AllArgsConstructor
 @Getter
 @Setter
@@ -42,31 +46,34 @@ public class Prodotto {
 	@Column(name="img_url")
 	private String imgUrl;			// url immagine, da usare in UI
 	
-	@ManyToMany (fetch = FetchType.EAGER)	
+	@ManyToMany (fetch = FetchType.LAZY)	
 	@JoinTable(								
 			name="prodotto_tag",
 			joinColumns = @JoinColumn (name = "prodotto_id" ),
 			inverseJoinColumns = @JoinColumn (name = "tag_id")
 			)
-	List<TagProdotto> tag;	// tag del prodotto, e.g. new, limited, cool drink, warm drink, vegan, etc
+	private Set<TagProdotto> tag = new HashSet<>();	// tag del prodotto, e.g. new, limited, cool drink, warm drink, vegan, etc
 	
-	@ManyToMany(fetch = FetchType.EAGER)
+	@ManyToMany(fetch = FetchType.LAZY)
 	@JoinTable(
 			name="prodotto_promozione",
 			joinColumns = @JoinColumn (name = "prodotto_id" ),
 			inverseJoinColumns = @JoinColumn (name = "promozione_id")
 			)
-	List<Promozione> promozione;	// sconti legati al prodotto
+	private Set<Promozione> promozione = new HashSet<>();	// sconti legati al prodotto
 	
 	@OneToMany(
 			mappedBy="prodotto",
-			fetch = FetchType.EAGER,
+			fetch = FetchType.LAZY,
 			cascade = CascadeType.ALL, //salva/aggiorna composizione
 			orphanRemoval = true //rimuove ingrediente eliminato se composizione modificata
 			)
 	private List<Composizione> composizione;	// lista di elementi "composizione" che ognuno contengono
 												//  un'ingrediente e la relativa quantitá
 	public void addComposizione(Composizione comp) {
+		log.debug(comp.toString());
+		if(composizione == null)
+			composizione = new ArrayList<>();
 		composizione.add(comp);
 		comp.setProdotto(this);
 	}

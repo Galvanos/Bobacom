@@ -27,6 +27,7 @@ public class ProdottoController {
 	
 	@PostMapping("create")
 	public ResponseEntity<ResponseDTO> create(@RequestBody (required = true) ProdottoRequest req) throws Exception{
+		log.debug("entered controller create!");
 		prodottoS.create(req);
 		return ResponseEntity.ok(ResponseDTO.builder()
 			.msg("created...")
@@ -49,9 +50,10 @@ public class ProdottoController {
 					.build());	
 	}
 	
-	@GetMapping("/list")
+	@GetMapping("list")
 	public ResponseEntity<Object> list(	@RequestParam (required = false) String tag,
 										@RequestParam (required = false) Boolean hasDiscount) throws Exception{
+		log.debug("entered controller /list;");
 		return ResponseEntity.ok(prodottoS.list(tag, hasDiscount));
 	}
 	
