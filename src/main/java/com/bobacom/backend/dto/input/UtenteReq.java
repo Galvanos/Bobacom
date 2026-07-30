@@ -22,7 +22,9 @@ import lombok.ToString;
 @ToString
 public class UtenteReq {
 
-	@NotNull(groups = ValidationGroups.Update.class, message = "id utente non fornito"  )
+	/**
+	 * Id utente, non obbligatorio, se omesso si baserà sull'utente autenticato
+	 */
 	private Integer id;
 	@NotNull(groups = ValidationGroups.Create.class, message = "username non fornito"  )
 	private String username;
@@ -32,6 +34,6 @@ public class UtenteReq {
 	@NotNull(groups = ValidationGroups.Create.class, message = "password non fornita"  )
 	private String password;
 	private Ruolo ruolo;//in caso di ruolo null si impone user
-	private BigDecimal credito;//credito non obbligatorio in fase di creazione
+	private BigDecimal credito;//credito non obbligatorio, non aggiornabile direttamente da tente
 	private String indirizzo;//indirizzo non obbligatorio
 }

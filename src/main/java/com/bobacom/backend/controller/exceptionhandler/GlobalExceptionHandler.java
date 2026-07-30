@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.bobacom.backend.dto.output.ResponseDTO;
+import com.bobacom.backend.exceptions.ForbiddenException;
+import com.bobacom.backend.exceptions.UnauthorizedException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +31,19 @@ public class GlobalExceptionHandler {
 				.build());
 	}
 
+	@ExceptionHandler(exception = UnauthorizedException.class)
+	 ResponseEntity<ResponseDTO> unauthorizedExceptionHandler(Exception e){
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseDTO.builder()
+				.msg(e.getMessage())
+				.build());
+	}
+	
+	@ExceptionHandler(exception = ForbiddenException.class)
+	 ResponseEntity<ResponseDTO> forbiddenExceptionHandler(Exception e){
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ResponseDTO.builder()
+				.msg(e.getMessage())
+				.build());
+	}
 	
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ResponseDTO> handleValidationException(MethodArgumentNotValidException e) {
