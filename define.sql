@@ -69,6 +69,7 @@
         prezzo numeric(38,2),
         prodotto_id integer,
         quantita integer,
+        summary varchar(255),
         primary key (id)
     );
 

@@ -1,6 +1,7 @@
 package com.bobacom.backend.dto.input;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.bobacom.backend.dto.input.validation.ValidationGroups;
 
@@ -22,7 +23,7 @@ public class OrdineRequest {
 	@NotNull(groups = ValidationGroups.Update.class, message = "id ordine non fornito")
     private Integer id;
     @NotNull(groups = ValidationGroups.Create.class, message = "user id non fornito")
-	private Integer utente_id;
+	private Integer idUtente;
     @NotNull(groups = ValidationGroups.Create.class, message = "prezzo totale non fornito")
 	private BigDecimal prezzoTotale;
     @NotNull(groups = ValidationGroups.Create.class, message = "stato ordine non fornito")
@@ -30,4 +31,6 @@ public class OrdineRequest {
 	private String status;
 	@NotNull(groups = ValidationGroups.Create.class, message = "indirizzo non fornito")
 	private String indirizzoDestinazione;
+    @NotNull(groups = ValidationGroups.Create.class, message = "prodotti non forniti")
+	private List<OrdineProdottoRequest> prodotti;
 }

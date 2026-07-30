@@ -61,7 +61,7 @@ public class Prodotto {
 			inverseJoinColumns = @JoinColumn (name = "promozione_id")
 			)
 	private Set<Promozione> promozione = new HashSet<>();	// sconti legati al prodotto
-	
+	  
 	@OneToMany(
 			mappedBy="prodotto",
 			fetch = FetchType.LAZY,
