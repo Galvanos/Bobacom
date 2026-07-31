@@ -3022,24 +3022,21 @@ public class UtenteControllerTest {
 		Assertions.assertThat(altroUtenteAggiornato.getIndirizzo()).isBlank();
 	}
 
-	/*
-	 * Creo un utente e gli faccio aggiornare il suo indirizzo basandomi sul login,
+	/**
+	 * Creo un utente amministratore e gli faccio aggiornare il suo indirizzo basandomi sul login,
 	 * mi aspetto funzioni
 	 * 
 	 * @throws Exception
-	 *
+	 */
 	@Test
-	public void updateAddressTestRecognizingByLogin() throws Exception {
+	public void updateAddressTestRecognizingByLoginByAdmin() throws Exception {
 
-		String utenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("utente").password("password")
-				.email("utente@example.com").indirizzo("Via vecchia 1").build());
-		mockMvc.perform(post("/rest/utente/public/create").content(utenteJSON).contentType(MediaType.APPLICATION_JSON))
-				.andExpect(status().isCreated());
+		utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).indirizzo("Via vecchia 1").email("admin@example.com").build());
 
 		// faccio il login
 
 		String loginReqJSON = objectMapper
-				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
 
 		MvcResult mvcResult = mockMvc
 				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
@@ -3058,19 +3055,19 @@ public class UtenteControllerTest {
 
 		String updateRequestJson = objectMapper.writeValueAsString(updateRequest);
 
-		mockMvc.perform(patch("/rest/utente/user/update").content(updateRequestJson)
+		mockMvc.perform(patch("/rest/utente/admin/update").content(updateRequestJson)
 				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk());
 
 		// recupero direttamente l'utente da repository
-		Utente utenteAggiornato = utenteRepository.findByUsername("utente")
+		Utente utenteAggiornato = utenteRepository.findByUsername("admin")
 				.orElseGet(() -> Assertions.fail("utente non trovato"));
 
-		Assertions.assertThat(utenteAggiornato.getUsername()).isEqualTo("utente");
-		Assertions.assertThat(passwordEncoder.matches("password", utenteAggiornato.getPassword())).isTrue();
+		Assertions.assertThat(utenteAggiornato.getUsername()).isEqualTo("admin");
+		Assertions.assertThat(passwordEncoder.matches("admin", utenteAggiornato.getPassword())).isTrue();
 		Assertions.assertThat(utenteAggiornato.getCredito()).isEqualTo(creditoDefault);
-		Assertions.assertThat(utenteAggiornato.getRuolo()).isEqualTo(Ruolo.UTENTE);
-		Assertions.assertThat(utenteAggiornato.getEmail()).isEqualTo("utente@example.com");
+		Assertions.assertThat(utenteAggiornato.getRuolo()).isEqualTo(Ruolo.ADMIN);
+		Assertions.assertThat(utenteAggiornato.getEmail()).isEqualTo("admin@example.com");
 		Assertions.assertThat(utenteAggiornato.getIndirizzo()).isEqualTo("Via nuova 2");
 	}
 
