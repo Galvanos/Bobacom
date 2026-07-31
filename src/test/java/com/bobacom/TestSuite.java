@@ -13,7 +13,7 @@ import com.bobacom.backend.service.TestKeyValuesService;
 @Suite
 @SelectClasses({
 	TestKeyValuesService.class,
-	//ProdottoImplementationTest.class,
+	ProdottoImplementationTest.class,
 	UtenteControllerTest.class,
 	AuthControllerTest.class
 })
