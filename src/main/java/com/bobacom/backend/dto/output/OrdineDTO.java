@@ -1,8 +1,7 @@
 package com.bobacom.backend.dto.output;
 
 import java.math.BigDecimal;
-
-import com.bobacom.backend.model.Utente;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,9 +16,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class OrdineDTO {
 	    private Integer id;
-		private Utente utente;
+		private UtenteDTO utente;
 		private BigDecimal prezzoTotale;
 		private String status;
 		private String dataCreazione;
-		private String indirizzoDestinazione;	
+		private String indirizzoDestinazione;
+		private List<OrdineProdottoDTO> ordineProdotto;
 }

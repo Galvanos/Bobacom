@@ -46,6 +46,9 @@ public class OrdineProdotto {
 	private Prodotto prodotto;
 	
 	@Column
+	private String summary;
+	
+	@Column
 	private Integer quantita;
 	
 	@Column 

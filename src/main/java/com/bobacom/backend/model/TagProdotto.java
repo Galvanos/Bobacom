@@ -29,4 +29,19 @@ public class TagProdotto {
 	
 	@Column
 	private String descrizione;
+	
+	@Override
+    public boolean equals(Object o) {
+        if (this == o) return true; // 1. Memory reference check
+        if (o == null || getClass() != o.getClass()) return false; // 2. Class check
+        TagProdotto that = (TagProdotto) o;
+        // 3. Compare IDs only if ID is not null
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        // 4. Return a constant or class hash so hashCode doesn't change when ID is generated
+        return getClass().hashCode(); 
+    }
 }

@@ -49,7 +49,7 @@ public class ProdottoController {
 					.build());	
 	}
 	
-	@GetMapping("/list")
+	@GetMapping("list")
 	public ResponseEntity<Object> list(	@RequestParam (required = false) String tag,
 										@RequestParam (required = false) Boolean hasDiscount) throws Exception{
 		return ResponseEntity.ok(prodottoS.list(tag, hasDiscount));
