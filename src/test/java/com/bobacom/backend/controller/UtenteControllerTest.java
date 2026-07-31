@@ -1,5 +1,7 @@
 package com.bobacom.backend.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -690,9 +692,58 @@ public class UtenteControllerTest {
 	}
 	
 	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	
+	///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Creo un utente e gli faccio aggiornare la sua email basandomi sul login, mi
+	 * aspetto funzioni
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void updateEmailTestRecognizingByLogin() throws Exception {
+
+		String utenteJSON = objectMapper.writeValueAsString(
+				UtenteDTO.builder().username("utente").password("password").email("utente@example.com").build());
+		mockMvc.perform(post("/rest/utente/public/create").content(utenteJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated());
+
+		// faccio il login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+		
+		UtenteReq updateRequest = UtenteReq.builder().email("email_aggiornata@example.com").build();
+		
+		String updateRequestJson = objectMapper.writeValueAsString(updateRequest);
+		
+		mockMvc.perform(patch("/rest/utente/user/update").content(updateRequestJson).header(HttpHeaders.AUTHORIZATION, "Bearer "+accessToken).contentType(MediaType.APPLICATION_JSON))
+		.andExpect(status().isOk());
+		
+		//recupero direttamente l'utente da repository
+		Utente utenteAggiornato = utenteRepository.findByUsername("utente")
+				.orElseGet(() -> Assertions.fail("utente non trovato"));
+
+		Assertions.assertThat(utenteAggiornato.getUsername()).isEqualTo("utente");
+		Assertions.assertThat(passwordEncoder.matches("password", utenteAggiornato.getPassword())).isTrue();
+		Assertions.assertThat(utenteAggiornato.getCredito()).isEqualTo(creditoDefault);
+		Assertions.assertThat(utenteAggiornato.getRuolo()).isEqualTo(Ruolo.UTENTE);
+		Assertions.assertThat(utenteAggiornato.getEmail()).isEqualTo("email_aggiornata@example.com");
+		Assertions.assertThat(utenteAggiornato.getIndirizzo()).isBlank();
+	}
 	
 	
 

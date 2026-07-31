@@ -80,7 +80,7 @@ public class AuthControllerTest {
 	//non cambia a livello di login tra utente ed amministratore, per cui non si fa un test di login di un amministratore, casomai lo si testa per i dati su sè stesso
 	
 	/**
-	 * Test sui dati iguardo l'utente stesso da parte di un utente
+	 * Test sui dati riguardo l'utente stesso da parte di un utente
 	 * @throws Exception
 	 */
 	@Test
@@ -109,6 +109,45 @@ public class AuthControllerTest {
 		
 		Assertions.assertThat(utenteDTO.getUsername()).isEqualTo("utente");
 		Assertions.assertThat(utenteDTO.getRuolo()).isEqualTo(Ruolo.UTENTE);
+		//non restituisco la password che comunque sarebbe un hash
+		Assertions.assertThat(utenteDTO.getPassword()).isBlank();
+		Assertions.assertThat(utenteDTO.getCredito()).isNotNull();
+		Assertions.assertThat(utenteDTO.getId()).isNotNull();
+		
+		
+	}
+	
+	
+	/**
+	 * Test sui dati riguardo l'utente stesso da parte di un amministratore
+	 * @throws Exception
+	 */
+	@Test
+	public void meAdminTest() throws Exception {
+		//creo un utente con privilegi ammnistratore
+		utenteService.create(UtenteReq.builder().username("admin").password("admin").email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+		
+		String loginReqJSON = objectMapper.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+		
+		MvcResult mvcResult = mockMvc.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+		
+		String responseString = mvcResult.getResponse().getContentAsString();
+		
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+		
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();
+		
+		MvcResult mvcResultMe = mockMvc.perform(get("/rest/auth/me").header(HttpHeaders.AUTHORIZATION, "Bearer "+accessToken)).andExpect(status().isOk()).andReturn();
+		
+		String responseStringMe = mvcResultMe.getResponse().getContentAsString();
+		
+		UtenteDTO utenteDTO = objectMapper.readValue(responseStringMe, UtenteDTO.class);
+		
+		Assertions.assertThat(utenteDTO.getUsername()).isEqualTo("admin");
+		Assertions.assertThat(utenteDTO.getRuolo()).isEqualTo(Ruolo.ADMIN);
 		//non restituisco la password che comunque sarebbe un hash
 		Assertions.assertThat(utenteDTO.getPassword()).isBlank();
 		Assertions.assertThat(utenteDTO.getCredito()).isNotNull();
