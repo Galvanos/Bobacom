@@ -45,12 +45,12 @@ public class OrdineImplementation implements IOrdineService{
 				.prezzoTotale(req.getPrezzoTotale())
 				.dataCreazione(LocalDateTime.now())
 				.indirizzoDestinazione(req.getIndirizzoDestinazione())
+				.status(StatoSpedizione.valueOf(req.getStatus()))
 				.utente(utente)
 				.build();
-		
 
-		utente.addOrdine(ordine);
 		ordine = ordineRepo.save(ordine);
+		utente.addOrdine(ordine);
 		
 		for(OrdineProdottoRequest r : req.getProdotti()) {
 			opRepo.save(OrdineProdotto.builder()

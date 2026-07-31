@@ -23,24 +23,25 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/rest/ordine")
 public class OrdineController {
-	private IOrdineService orderService;
+	private final IOrdineService orderService;
 	
 	@PostMapping("create")
 	public ResponseEntity<ResponseDTO> create(@RequestBody (required=true) OrdineRequest request) throws Exception{
+		log.debug("first item of order: " + request.getProdotti().getFirst().toString());
 		orderService.create(request);
-		return ResponseEntity.ok(ResponseDTO.builder().msg("Ingrediente aggiunto").build());
+		return ResponseEntity.ok(ResponseDTO.builder().msg("Ordine aggiunto").build());
 	}
 	
 	@PatchMapping("update")
 	public ResponseEntity<ResponseDTO> update(@RequestBody (required=true) OrdineRequest request) throws Exception{
 		orderService.update(request);
-		return ResponseEntity.ok(ResponseDTO.builder().msg("Ingrediente modificato").build());
+		return ResponseEntity.ok(ResponseDTO.builder().msg("Ordine modificato").build());
 	}
 	
 	@DeleteMapping("delete/{id}")
 	public ResponseEntity<ResponseDTO> delete(@PathVariable (required=true) Integer id) throws Exception{
 		orderService.delete(id);
-		return ResponseEntity.ok(ResponseDTO.builder().msg("Ingrediente eliminato").build());
+		return ResponseEntity.ok(ResponseDTO.builder().msg("Ordine eliminato").build());
 	}
 	@GetMapping("list")
 	public ResponseEntity<Object> list() throws Exception{
