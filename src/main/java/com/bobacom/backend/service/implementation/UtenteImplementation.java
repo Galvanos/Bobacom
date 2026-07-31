@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bobacom.backend.dto.input.AddCreditReq;
+import com.bobacom.backend.dto.input.DecreaseCreditReq;
 import com.bobacom.backend.dto.input.UtenteReq;
 import com.bobacom.backend.dto.output.UtenteDTO;
 import com.bobacom.backend.enums.Ruolo;
@@ -240,6 +241,7 @@ public class UtenteImplementation implements IUtenteService {
 		return UtenteMap.buildUtenteDTO(storedUser, false);
 	}
 
+	
 
 	@Override
 	public UtenteDTO addCreditByUser(AddCreditReq addCreditReq) throws Exception {
@@ -264,6 +266,55 @@ public class UtenteImplementation implements IUtenteService {
 			}
 		}
 		return addCredit(addCreditReq);
+	}
+	
+	@Transactional
+	@Override
+	public UtenteDTO decreaseCredit(DecreaseCreditReq decreaseCreditReq) throws Exception {
+		Integer userId = decreaseCreditReq.getUserId();
+		if(userId == null) {
+			throw new AcademyException("utente non fornito");
+		}
+		Utente storedUser = repository.findById(userId)
+				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
+		BigDecimal credito = storedUser.getCredito();
+		if(credito == null) {
+			credito = BigDecimal.ZERO;
+		}
+		BigDecimal decreasingCredit = decreaseCreditReq.getCredit();
+		if(credito.compareTo(decreasingCredit) < 0) {
+			throw new AcademyException("credito insufficiente");
+		}
+		BigDecimal resultingCredit = credito.subtract(decreasingCredit);
+		storedUser.setCredito(resultingCredit);
+		storedUser = repository.save(storedUser);
+		return UtenteMap.buildUtenteDTO(storedUser, false);
+	}
+
+
+	@Override
+	public UtenteDTO decreaseCreditByUser(DecreaseCreditReq decreaseCreditReq) throws Exception {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		Utente foundUser = null;
+		if(authentication != null) {
+			if(authentication.isAuthenticated()) {
+				String username = authentication.getName();
+				foundUser = repository.findByUsername(username).orElseThrow( () -> new UserNotFoundException("utente non trovato"));
+				Integer foundUserId = foundUser.getId();
+				decreaseCreditReq.setUserId(Optional.ofNullable(decreaseCreditReq).map(DecreaseCreditReq::getUserId).orElse(foundUserId));
+				Integer requestUserId = decreaseCreditReq.getUserId();
+				if(!Objects.equals(requestUserId,foundUserId)) {
+					Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+					boolean isAdmin = authorities.stream().map(t -> t.getAuthority()).anyMatch(t -> Objects.equals(t, "ROLE_"+Ruolo.ADMIN.name()));
+					if(!isAdmin) {
+						throw new ForbiddenException("utente non autorizzato");
+					}
+				}
+			}else {
+				throw new UnauthorizedException("utente non autorizzato");
+			}
+		}
+		return decreaseCredit(decreaseCreditReq);
 	}
 
 
