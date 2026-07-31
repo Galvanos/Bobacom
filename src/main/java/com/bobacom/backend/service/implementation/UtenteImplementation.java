@@ -140,9 +140,6 @@ public class UtenteImplementation implements IUtenteService {
 					storedUser.setUsername(requestUsername);
 				}
 			}
-		}else {
-			//per updateUtenteForAuthentication devo forzare lo username, probabilmente non servirà più
-			req.setUsername(formerUsername);
 		}
 		
 		String encodedPassword = storedUser.getPassword();
