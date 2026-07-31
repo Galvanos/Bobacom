@@ -24,5 +24,4 @@ public class ProdottoDTO {
 	List<TagProdottoDTO> tag;
 	List<PromozioneDTO> promozione;
 	private List<ComposizioneDTO> composizione;
-
 }
