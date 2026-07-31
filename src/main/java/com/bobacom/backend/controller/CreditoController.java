@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bobacom.backend.dto.input.AddCreditReq;
+import com.bobacom.backend.dto.input.DecreaseCreditReq;
 import com.bobacom.backend.dto.output.UtenteDTO;
 import com.bobacom.backend.security.CustomUserDetailsService;
 import com.bobacom.backend.security.interfaces.JwtService;
@@ -52,6 +53,30 @@ public class CreditoController {
 			req.setUserId(userId);
 		}
 		UtenteDTO updatedUtenteDTO = utenteService.addCredit(req);
+		UtenteDTO toReturn = UtenteDTO.builder()
+				.credito(updatedUtenteDTO.getCredito())
+				.id(updatedUtenteDTO.getId())
+				.username(updatedUtenteDTO.getUsername())
+				.build();
+		return ResponseEntity.ok(toReturn);
+	}
+	
+	
+	@PatchMapping("/user/decreaseCredito")
+	public ResponseEntity<UtenteDTO> decreaseCreditoByUser(@RequestBody DecreaseCreditReq req) throws Exception{
+		UtenteDTO updatedUtenteDTO = utenteService.decreaseCreditByUser(req);
+		UtenteDTO toReturn = UtenteDTO.builder()
+				.credito(updatedUtenteDTO.getCredito())
+				.id(updatedUtenteDTO.getId())
+				.username(updatedUtenteDTO.getUsername())
+				.build();
+		return ResponseEntity.ok(toReturn);
+	}
+	
+	
+	@PatchMapping("/admin/decreaseCredito")
+	public ResponseEntity<UtenteDTO> decreaseCreditoByAdmin(@RequestBody DecreaseCreditReq req) throws Exception{
+		UtenteDTO updatedUtenteDTO = utenteService.decreaseCredit(req);
 		UtenteDTO toReturn = UtenteDTO.builder()
 				.credito(updatedUtenteDTO.getCredito())
 				.id(updatedUtenteDTO.getId())
