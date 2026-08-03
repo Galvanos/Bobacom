@@ -67,7 +67,7 @@ public interface IUtenteService {
 	UtenteDTO getByUsernameByUser(String username) throws Exception;
 	List<UtenteDTO> list() throws Exception;
 	/**
-	 * Cancella un utente
+	 * Cancella un utente, un utente non può cancellare sè stesso qualora sia loggato perché ci sarebbe un problema di autenticazione
 	 * @param id id dell'utente da cancellare
 	 * @return l'utente appena cancellato
 	 * @throws Exception in caso di errori, tra cui utente inesistente

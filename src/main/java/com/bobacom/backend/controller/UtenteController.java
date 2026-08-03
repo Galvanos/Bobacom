@@ -130,8 +130,8 @@ public class UtenteController {
 	
 	@DeleteMapping("/admin/delete/{id}")
 	public ResponseEntity<ResponseDTO> delete(@PathVariable (required=true) Integer id) throws Exception{
-		UtenteDTO updatedUser = service.delete(id);
-		return ResponseEntity.ok(new ResponseDTO("updated..."));
+		UtenteDTO deletedUser = service.delete(id);
+		return ResponseEntity.ok(new ResponseDTO("deleted..."));
 	}
 	
 	

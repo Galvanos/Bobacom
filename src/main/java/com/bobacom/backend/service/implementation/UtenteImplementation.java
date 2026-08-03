@@ -217,6 +217,16 @@ public class UtenteImplementation implements IUtenteService {
 	public UtenteDTO delete(Integer id) throws Exception {
 		Utente storedUser = repository.findById(id)
 				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
+		//impedisco all'utente loggato di cancellare sé stesso in modo da non compromettere il login
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if(authentication != null) {
+			if(authentication.isAuthenticated()) {
+				String authenticatedUsername = authentication.getName();
+				if(Objects.equals(storedUser.getUsername(), authenticatedUsername)) {
+					throw new ForbiddenException("non consentito cancellare lo stesso utente loggato");
+				}
+			}
+		}
 		repository.delete(storedUser);
 		return UtenteMap.buildUtenteDTO(storedUser, false);
 		

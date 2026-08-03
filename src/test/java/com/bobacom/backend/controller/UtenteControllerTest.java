@@ -1,5 +1,6 @@
 package com.bobacom.backend.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -7429,4 +7430,170 @@ public class UtenteControllerTest {
 					.andExpect(status().isForbidden());
 		}
 		
+		/**
+		 * Creo due utenti, un amministratore e un utente normale e cancello l'utente normale
+		 * @throws Exception
+		 */
+		@Test
+		public void testDelete() throws Exception{
+			utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+			// faccio il login
+
+			String loginAdminReqJSON = objectMapper
+					.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+			MvcResult mvcResult = mockMvc
+					.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+			String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+			LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+			Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+			Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+			
+			String accessToken = loginDTO.getAccessToken();	
+			
+			Utente adminUtente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("admin non trovato"));
+			
+			String altroUtenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("altro_utente").password("altra_password")
+					.email("utente@example.com").build());
+			mockMvc.perform(post("/rest/utente/public/create").content(altroUtenteJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isCreated());
+
+			//mi basta solo creare l'altro utente, non deve fare login
+				
+			//recupero l'altro utente da database per averne l'id
+			
+			Utente altroUtente = utenteRepository.findByUsername("altro_utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+		
+
+			mockMvc.perform(delete("/rest/utente/admin/delete/{id}",altroUtente.getId())
+					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk());
+			
+			//recupero tutti gli utenti da database, mi aspetto ci sia solo l'admin
+			List<Utente> allUtenti = utenteRepository.findAll();
+		
+			Assertions.assertThat(allUtenti).isNotNull();
+			Assertions.assertThat(allUtenti).isNotEmpty();
+			Assertions.assertThat(allUtenti.size()).isEqualTo(1);
+			
+			Utente storedUtente = allUtenti.get(0);
+			
+			Assertions.assertThat(storedUtente.getId()).isEqualTo(adminUtente.getId());
+			Assertions.assertThat(storedUtente.getUsername()).isEqualTo(adminUtente.getUsername());
+			Assertions.assertThat(storedUtente.getCredito()).isEqualTo(adminUtente.getCredito());
+			Assertions.assertThat(storedUtente.getEmail()).isEqualTo(adminUtente.getEmail());
+			Assertions.assertThat(storedUtente.getRuolo()).isEqualTo(adminUtente.getRuolo());
+			Assertions.assertThat(storedUtente.getIndirizzo()).isEqualTo(adminUtente.getIndirizzo());
+			//per verificare la corrisponenza della password si parte dalla password in chiaro, essendo due hash non si può verificare 
+			//se corrispondono alla stessa password confrontandoli (è proprio lo scopo dell'hash non arrivare alla password originale), 
+			//in teoria dovrebbe essere lo stesso hash  e lo stesso algoritmo, 
+			//quindi bastare un confronto diretto, ma è meglio
+			//seguire in maniera più ortodossa la corrispondenza con l'encoder
+			Assertions.assertThat(passwordEncoder.matches("admin", storedUtente.getPassword())).isTrue();
+			Assertions.assertThat(passwordEncoder.matches("admin", adminUtente.getPassword())).isTrue();
+		}
+		
+		/**
+		 * Creo un amministratore e provo a cancellarlo, mi aspetto che fallisca perché non è consentito cancellare sé stessi
+		 * @throws Exception
+		 */
+		@Test
+		public void testDeleteSelf() throws Exception{
+			utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+			// faccio il login
+
+			String loginAdminReqJSON = objectMapper
+					.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+			MvcResult mvcResult = mockMvc
+					.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+			String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+			LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+			Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+			Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+			
+			String accessToken = loginDTO.getAccessToken();	
+			
+			Utente adminUtente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("admin non trovato"));
+			
+
+			mockMvc.perform(delete("/rest/utente/admin/delete/{id}",adminUtente.getId())
+					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isForbidden());
+		}
+		
+		/**
+		 * Creo due utentin amministratore e ne cancello uno da parte dell'altro amministratore, mi aspetto che funzioni
+		 * @throws Exception
+		 */
+		@Test
+		public void testDeleteAdmin() throws Exception{
+			utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+			// faccio il login
+
+			String loginAdminReqJSON = objectMapper
+					.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+			MvcResult mvcResult = mockMvc
+					.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+			String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+			LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+			Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+			Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+			
+			String accessToken = loginDTO.getAccessToken();	
+			
+			Utente adminUtente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("admin non trovato"));
+			
+			utenteService.create(UtenteReq.builder().username("admin_altro").password("admin_altra").ruolo(Ruolo.ADMIN).email("admin_altro@example.com").build());
+
+			//mi basta solo creare l'altro utente, non deve fare login
+				
+			//recupero l'altro utente da database per averne l'id
+			
+			Utente altroAdmin = utenteRepository.findByUsername("admin_altro").orElseGet(() -> Assertions.fail("utente non trovato"));
+		
+
+			mockMvc.perform(delete("/rest/utente/admin/delete/{id}",altroAdmin.getId())
+					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk());
+			
+			//recupero tutti gli utenti da database, mi aspetto ci sia solo l'admin
+			List<Utente> allUtenti = utenteRepository.findAll();
+		
+			Assertions.assertThat(allUtenti).isNotNull();
+			Assertions.assertThat(allUtenti).isNotEmpty();
+			Assertions.assertThat(allUtenti.size()).isEqualTo(1);
+			
+			Utente storedUtente = allUtenti.get(0);
+			
+			Assertions.assertThat(storedUtente.getId()).isEqualTo(adminUtente.getId());
+			Assertions.assertThat(storedUtente.getUsername()).isEqualTo(adminUtente.getUsername());
+			Assertions.assertThat(storedUtente.getCredito()).isEqualTo(adminUtente.getCredito());
+			Assertions.assertThat(storedUtente.getEmail()).isEqualTo(adminUtente.getEmail());
+			Assertions.assertThat(storedUtente.getRuolo()).isEqualTo(adminUtente.getRuolo());
+			Assertions.assertThat(storedUtente.getIndirizzo()).isEqualTo(adminUtente.getIndirizzo());
+			//per verificare la corrisponenza della password si parte dalla password in chiaro, essendo due hash non si può verificare 
+			//se corrispondono alla stessa password confrontandoli (è proprio lo scopo dell'hash non arrivare alla password originale), 
+			//in teoria dovrebbe essere lo stesso hash  e lo stesso algoritmo, 
+			//quindi bastare un confronto diretto, ma è meglio
+			//seguire in maniera più ortodossa la corrispondenza con l'encoder
+			Assertions.assertThat(passwordEncoder.matches("admin", storedUtente.getPassword())).isTrue();
+			Assertions.assertThat(passwordEncoder.matches("admin", adminUtente.getPassword())).isTrue();
+		}
 }
