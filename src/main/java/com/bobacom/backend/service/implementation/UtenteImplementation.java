@@ -175,8 +175,16 @@ public class UtenteImplementation implements IUtenteService {
 				Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 				boolean isAdmin = authorities.stream().map(t -> t.getAuthority()).anyMatch(t -> Objects.equals(t, "ROLE_"+Ruolo.ADMIN.name()));
 				boolean differentUsername = !Objects.equals(username, storedUser.getUsername());
+				//se non è amministratore e il nome loggato è diverso dal nome memorizzato non è autorizzato
 				if(!isAdmin && differentUsername) {
 					throw new ForbiddenException("utente non autorizzato");
+				}
+				//verifico se il nome richiesto dall'update è diverso da quello memorizzato, per gli admin fallisce con bad request e dovrebbe fallire con bad request anche per i non admin
+				if(req.getUsername() != null) {
+					boolean differentUsernameInRequest = !Objects.equals(req.getUsername(), storedUser.getUsername());
+					if(differentUsernameInRequest) {
+						throw new AcademyException("cambio username non consentito");
+					}
 				}
 			}else {
 				throw new UnauthorizedException("utente non autorizzato");
