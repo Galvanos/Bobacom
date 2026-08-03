@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
@@ -34,6 +35,7 @@ import com.bobacom.backend.repository.IUtenteRepository;
 import com.bobacom.backend.service.interfaces.IUtenteService;
 
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
@@ -7134,7 +7136,7 @@ public class UtenteControllerTest {
 			Utente altroUtente = utenteRepository.findByUsername("altro_utente").orElseGet(() -> Assertions.fail("utente non trovato"));
 		
 
-			//uso il token di utente per cercare di recuperare i dati di altro_utente, mi aspetto un admin lo trovi
+			//uso il token di admin per cercare di recuperare i dati di altro_utente, mi aspetto un admin lo trovi
 			MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/user/getById").queryParam("id", altroUtente.getId().toString())
 					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
 					.andExpect(status().isOk()).andReturn();
@@ -7191,7 +7193,7 @@ public class UtenteControllerTest {
 			Utente altroUtente = utenteRepository.findByUsername("altro_utente").orElseGet(() -> Assertions.fail("utente non trovato"));
 		
 
-			//uso il token di utente per cercare di recuperare i dati di altro_utente, mi aspetto che un admin lo trovi
+			//uso il token di admin per cercare di recuperare i dati di altro_utente, mi aspetto che un admin lo trovi
 			MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/user/getByUsername").queryParam("username", "altro_utente")
 					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
 					.andExpect(status().isOk()).andReturn();
@@ -7304,4 +7306,127 @@ public class UtenteControllerTest {
 			Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
 			Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.ADMIN);
 		}
+		
+		/**
+		 * Creo due utenti, un amministratore e un utente normale e faccio la list degli utenti
+		 * @throws Exception
+		 */
+		@Test
+		public void testList() throws Exception{
+			utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+			// faccio il login
+
+			String loginAdminReqJSON = objectMapper
+					.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+			MvcResult mvcResult = mockMvc
+					.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+			String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+			LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+			Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+			Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+			
+			String accessToken = loginDTO.getAccessToken();	
+			
+			Utente adminUtente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("admin non trovato"));
+			
+			String altroUtenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("altro_utente").password("altra_password")
+					.email("utente@example.com").build());
+			mockMvc.perform(post("/rest/utente/public/create").content(altroUtenteJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isCreated());
+
+			//mi basta solo creare l'altro utente, non deve fare login
+				
+			//recupero l'altro utente da database per averne l'id
+			
+			Utente altroUtente = utenteRepository.findByUsername("altro_utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+		
+
+			MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/admin/list")
+					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andReturn();
+			
+			String responseString = mvcResponse.getResponse().getContentAsString();
+
+			List<UtenteDTO> getResponse = objectMapper.readValue(responseString, new TypeReference<List<UtenteDTO>>() {});
+			
+			Assertions.assertThat(getResponse).isNotNull();
+			Assertions.assertThat(getResponse).isNotEmpty();
+			Assertions.assertThat(getResponse.size()).isEqualTo(2);
+			
+			
+			List<UtenteDTO> usersWithAdminUsername = getResponse.stream().filter(t -> Objects.equals(t.getUsername(), "admin")).toList();
+			Assertions.assertThat(usersWithAdminUsername.size()).isEqualTo(1);
+			UtenteDTO adminResult = usersWithAdminUsername.get(0);
+			Assertions.assertThat(adminResult.getId()).isEqualTo(adminUtente.getId());
+			Assertions.assertThat(adminResult.getUsername()).isEqualTo("admin");
+			Assertions.assertThat(adminResult.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+			Assertions.assertThat(adminResult.getCredito()).isEqualTo(creditoDefault);
+			Assertions.assertThat(adminResult.getEmail()).isEqualTo("admin@example.com");
+			Assertions.assertThat(adminResult.getIndirizzo()).isBlank();
+			Assertions.assertThat(adminResult.getRuolo()).isEqualTo(Ruolo.ADMIN);
+			
+			
+			List<UtenteDTO> usersWithUtenteUsername = getResponse.stream().filter(t -> Objects.equals(t.getUsername(), "altro_utente")).toList();
+			Assertions.assertThat(usersWithUtenteUsername.size()).isEqualTo(1);
+			UtenteDTO utenteResult = usersWithUtenteUsername.get(0);
+			Assertions.assertThat(utenteResult.getId()).isEqualTo(altroUtente.getId());
+			Assertions.assertThat(utenteResult.getUsername()).isEqualTo("altro_utente");
+			Assertions.assertThat(utenteResult.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+			Assertions.assertThat(utenteResult.getCredito()).isEqualTo(creditoDefault);
+			Assertions.assertThat(utenteResult.getEmail()).isEqualTo("utente@example.com");
+			Assertions.assertThat(utenteResult.getIndirizzo()).isBlank();
+			Assertions.assertThat(utenteResult.getRuolo()).isEqualTo(Ruolo.UTENTE);
+		}
+		
+		/**
+		 * Creo due utenti, un amministratore e un utente normale e provo a far fare la list all'utente normale, mi aspetto che fallisca
+		 * @throws Exception
+		 */
+		@Test
+		public void testListByUser() throws Exception{
+			utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+			
+			//mi basta solo creae admin, non devo fare login
+			Utente adminUtente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("admin non trovato"));
+			
+			String altroUtenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("altro_utente").password("altra_password")
+					.email("utente@example.com").build());
+			mockMvc.perform(post("/rest/utente/public/create").content(altroUtenteJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isCreated());
+
+			// faccio il login
+
+			String loginReqJSON = objectMapper
+					.writeValueAsString(LoginReq.builder().username("altro_utente").password("altra_password").build());
+
+			MvcResult mvcResult = mockMvc
+					.perform(
+							post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+			String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+			LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+			Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+			Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+			String accessToken = loginDTO.getAccessToken();
+				
+			//recupero l'altro utente da database per averne l'id
+			
+			Utente altroUtente = utenteRepository.findByUsername("altro_utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+		
+
+			mockMvc.perform(get("/rest/utente/admin/list")
+					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isForbidden());
+		}
+		
 }
