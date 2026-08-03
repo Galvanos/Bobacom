@@ -43,5 +43,8 @@ public class TagProdottoImplementation implements ITagProdottoService{
 		return TagMap.buildTagProdottoDTO(tagRepo.findById(id).orElseThrow(
 				() -> new AcademyException("no such tag")));
 	}
-
+	@Override
+	public List<TagProdottoDTO> listOrdered() throws Exception {
+		return tagRepo.findAllByOrderById().stream().map(a -> TagMap.buildTagProdottoDTO(a)).toList();
+	}
 }

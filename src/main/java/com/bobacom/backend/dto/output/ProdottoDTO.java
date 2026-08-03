@@ -1,10 +1,6 @@
 package com.bobacom.backend.dto.output;
 
 import java.util.List;
-import com.bobacom.backend.model.Composizione;
-import com.bobacom.backend.model.Promozione;
-import com.bobacom.backend.model.TagProdotto;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
