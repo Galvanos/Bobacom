@@ -4488,10 +4488,7 @@ public class UtenteControllerTest {
 		Assertions.assertThat(altroUtenteAggiornato.getIndirizzo()).isBlank();
 	}
 	
-	//*/
-	
-	//TODO testare login su endpoint updae amministrativo da utente non amministratore
-	
+		
 	/**
 	 * Creo un utente amministratore e gli faccio aggiornare la sua email basandomi sul login usando l'endpount user, mi
 	 * aspetto funzioni
@@ -6169,7 +6166,7 @@ public class UtenteControllerTest {
 		Assertions.assertThat(altroUtenteAggiornato.getIndirizzo()).isBlank();
 	}
 	
-	//*/
+	
 	
 	/**
 	 * Creo un utente e provo a fargli aggiornare un utente inesistente, mi aspetto che fallisca già da fatto che non è sé stesso
@@ -6333,9 +6330,7 @@ public class UtenteControllerTest {
 				.andExpect(status().isBadRequest());
 
 
-	}
-	
-	
+	}	
 	
 	/**
 	 * Creo un utente amministratore e due utenti e faccio un update del secondo utente non amministratore provando a fargli assumere lo username del primo,
@@ -6396,4 +6391,917 @@ public class UtenteControllerTest {
 
 	}
 	
+	/**
+	 * Creo un utente e ne leggo i dati recuperandolo per id
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetUserById() throws Exception{
+		String utenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("utente").password("password")
+				.email("utente@example.com").build());
+		mockMvc.perform(post("/rest/utente/public/create").content(utenteJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated());
+
+		// faccio il login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();
+			
+		//recupero l'utente da database per averne l'id
+		
+		Utente utente = utenteRepository.findByUsername("utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+	
+
+		MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/user/getById").queryParam("id", utente.getId().toString())
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String responseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+		
+		Assertions.assertThat(getResponse.getId()).isEqualTo(utente.getId());
+		Assertions.assertThat(getResponse.getUsername()).isEqualTo("utente");
+		Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+		Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+		Assertions.assertThat(getResponse.getEmail()).isEqualTo("utente@example.com");
+		Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+		Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.UTENTE);
+	}
+	
+	/**
+	 * Creo un utente e ne leggo i dati recuperandolo per username
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetUserByUsername() throws Exception{
+		String utenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("utente").password("password")
+				.email("utente@example.com").build());
+		mockMvc.perform(post("/rest/utente/public/create").content(utenteJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated());
+
+		// faccio il login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();
+			
+		//recupero l'utente da database per averne l'id
+		
+		Utente utente = utenteRepository.findByUsername("utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+	
+
+		MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/user/getByUsername").queryParam("username", "utente")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String responseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+		
+		Assertions.assertThat(getResponse.getId()).isEqualTo(utente.getId());
+		Assertions.assertThat(getResponse.getUsername()).isEqualTo("utente");
+		Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+		Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+		Assertions.assertThat(getResponse.getEmail()).isEqualTo("utente@example.com");
+		Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+		Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.UTENTE);
+	}
+	
+	/**
+	 * Creo due utenti e  leggo i dati del secondo utente recuperandolo per id, mi aspetto fallisca
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetOtherUserById() throws Exception{
+		String utenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("utente").password("password")
+				.email("utente@example.com").build());
+		mockMvc.perform(post("/rest/utente/public/create").content(utenteJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated());
+
+		// faccio il login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();		
+		
+		String altroUtenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("altro_utente").password("altra_password")
+				.email("utente@example.com").build());
+		mockMvc.perform(post("/rest/utente/public/create").content(altroUtenteJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated());
+
+		//mi basta solo creare l'altro utente, non deve fare login
+			
+		//recupero l'altro utente da database per averne l'id
+		
+		Utente altroUtente = utenteRepository.findByUsername("altro_utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+	
+
+		//uso il token di utente per cercare di recuperare i dati di altro_utente, mi aspetto un fallimento
+		mockMvc.perform(get("/rest/utente/user/getById").queryParam("id", altroUtente.getId().toString())
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isForbidden());
+	}
+	
+	/**
+	 * Creo due utenti utente e  leggo i dati del secondo recuperandolo per username, mi aspetto di fallire
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetOtherUserByUsername() throws Exception{
+		String utenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("utente").password("password")
+				.email("utente@example.com").build());
+		mockMvc.perform(post("/rest/utente/public/create").content(utenteJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated());
+
+		// faccio il login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();		
+		
+		String altroUtenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("altro_utente").password("altra_password")
+				.email("utente@example.com").build());
+		mockMvc.perform(post("/rest/utente/public/create").content(altroUtenteJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated());
+
+		//mi basta solo creare l'altro utente, non deve fare login
+			
+		//recupero l'altro utente da database per averne l'id
+		
+		Utente altroUtente = utenteRepository.findByUsername("altro_utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+	
+
+		//uso il token di utente per cercare di recuperare i dati di altro_utente, mi aspetto un fallimento
+		mockMvc.perform(get("/rest/utente/user/getByUsername").queryParam("username", "altro_utente")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isForbidden());
+	}
+	
+	/**
+	 * Creo un utente e ne leggo i dati con il servizio get by id, ma non passo query param, mi aspetto usi la login
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetUserByIdByLogin() throws Exception{
+		String utenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("utente").password("password")
+				.email("utente@example.com").build());
+		mockMvc.perform(post("/rest/utente/public/create").content(utenteJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated());
+
+		// faccio il login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();
+			
+		//recupero l'utente da database per averne l'id
+		
+		Utente utente = utenteRepository.findByUsername("utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+	
+
+		MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/user/getById")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String responseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+		
+		Assertions.assertThat(getResponse.getId()).isEqualTo(utente.getId());
+		Assertions.assertThat(getResponse.getUsername()).isEqualTo("utente");
+		Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+		Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+		Assertions.assertThat(getResponse.getEmail()).isEqualTo("utente@example.com");
+		Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+		Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.UTENTE);
+	}
+	
+	/**
+	 * Creo un utente e ne leggo con il servizio get by username, ma non passo query param, mi aspetto usi la login
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetUserByUsernameByLogin() throws Exception{
+		String utenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("utente").password("password")
+				.email("utente@example.com").build());
+		mockMvc.perform(post("/rest/utente/public/create").content(utenteJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated());
+
+		// faccio il login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();
+			
+		//recupero l'utente da database per averne l'id
+		
+		Utente utente = utenteRepository.findByUsername("utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+	
+
+		MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/user/getByUsername")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String responseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+		
+		Assertions.assertThat(getResponse.getId()).isEqualTo(utente.getId());
+		Assertions.assertThat(getResponse.getUsername()).isEqualTo("utente");
+		Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+		Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+		Assertions.assertThat(getResponse.getEmail()).isEqualTo("utente@example.com");
+		Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+		Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.UTENTE);
+	}
+	
+	//*////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	/**
+	 * Creo un utente amministratore e ne leggo i dati recuperandolo per id
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetAdminUserById() throws Exception{
+		utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+		// faccio il login
+
+		String loginAdminReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();
+			
+		//recupero l'utente da database per averne l'id
+		
+		Utente utente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("utente non trovato"));
+	
+
+		MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/admin/getById").queryParam("id", utente.getId().toString())
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String responseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+		
+		Assertions.assertThat(getResponse.getId()).isEqualTo(utente.getId());
+		Assertions.assertThat(getResponse.getUsername()).isEqualTo("admin");
+		Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+		Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+		Assertions.assertThat(getResponse.getEmail()).isEqualTo("admin@example.com");
+		Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+		Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.ADMIN);
+	}
+	
+	/**
+	 * Creo un utente amministratore e ne leggo i dati recuperandolo per username
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetAdminUserByUsername() throws Exception{
+		utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+		// faccio il login
+
+		String loginAdminReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();
+			
+		//recupero l'utente da database per averne l'id
+		
+		Utente utente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("utente non trovato"));
+	
+
+		MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/admin/getByUsername").queryParam("username", "admin")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String responseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+		
+		Assertions.assertThat(getResponse.getId()).isEqualTo(utente.getId());
+		Assertions.assertThat(getResponse.getUsername()).isEqualTo("admin");
+		Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+		Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+		Assertions.assertThat(getResponse.getEmail()).isEqualTo("admin@example.com");
+		Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+		Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.ADMIN);
+	}
+	
+	/**
+	 * Creo un utente amministratore e uno non amministratore e leggo i dati del secondo utente recuperandolo per id, mi aspetto riesca a leggerli
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetOtherUserByIdByAdmin() throws Exception{
+		utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+		// faccio il login
+
+		String loginAdminReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();		
+		
+		String altroUtenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("altro_utente").password("altra_password")
+				.email("utente@example.com").build());
+		mockMvc.perform(post("/rest/utente/public/create").content(altroUtenteJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated());
+
+		//mi basta solo creare l'altro utente, non deve fare login
+			
+		//recupero l'altro utente da database per averne l'id
+		
+		Utente altroUtente = utenteRepository.findByUsername("altro_utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+	
+
+		//uso il token di utente per cercare di recuperare i dati di altro_utente, mi aspetto un admin lo trovi
+		MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/admin/getById").queryParam("id", altroUtente.getId().toString())
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String responseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+		
+		Assertions.assertThat(getResponse.getId()).isEqualTo(altroUtente.getId());
+		Assertions.assertThat(getResponse.getUsername()).isEqualTo("altro_utente");
+		Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+		Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+		Assertions.assertThat(getResponse.getEmail()).isEqualTo("utente@example.com");
+		Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+		Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.UTENTE);
+	}
+	
+	/**
+	 * Creo un utente amministratore e uno non amministratore e leggo i dati del secondo utente recuperandolo per username, mi aspetto riesca a leggerli
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetOtherUserByUsernameByAdmin() throws Exception{
+		utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+		// faccio il login
+
+		String loginAdminReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();		
+		
+		String altroUtenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("altro_utente").password("altra_password")
+				.email("utente@example.com").build());
+		mockMvc.perform(post("/rest/utente/public/create").content(altroUtenteJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated());
+
+		//mi basta solo creare l'altro utente, non deve fare login
+			
+		//recupero l'altro utente da database per averne l'id
+		
+		Utente altroUtente = utenteRepository.findByUsername("altro_utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+	
+
+		//uso il token di utente per cercare di recuperare i dati di altro_utente, mi aspetto che un admin lo trovi
+		MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/admin/getByUsername").queryParam("username", "altro_utente")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String responseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+		
+		Assertions.assertThat(getResponse.getId()).isEqualTo(altroUtente.getId());
+		Assertions.assertThat(getResponse.getUsername()).isEqualTo("altro_utente");
+		Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+		Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+		Assertions.assertThat(getResponse.getEmail()).isEqualTo("utente@example.com");
+		Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+		Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.UTENTE);
+	}
+	
+	/**
+	 * Creo un utente amministratore e ne leggo i dati con il servizio get by id, ma non passo query param, mi aspetto usi la login
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetAdminUserByIdByLogin() throws Exception{
+		utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+		// faccio il login
+
+		String loginAdminReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();
+			
+		//recupero l'utente da database per averne l'id
+		
+		Utente utente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("utente non trovato"));
+	
+
+		MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/admin/getById")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String responseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+		
+		Assertions.assertThat(getResponse.getId()).isEqualTo(utente.getId());
+		Assertions.assertThat(getResponse.getUsername()).isEqualTo("admin");
+		Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+		Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+		Assertions.assertThat(getResponse.getEmail()).isEqualTo("admin@example.com");
+		Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+		Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.ADMIN);
+	}
+	
+	/**
+	 * Creo un utente amministratore e ne leggo con il servizio get by username, ma non passo query param, mi aspetto usi la login
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetAdminUserByUsernameByLogin() throws Exception{
+		utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+		// faccio il login
+
+		String loginAdminReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+		
+		String accessToken = loginDTO.getAccessToken();
+			
+		//recupero l'utente da database per averne l'id
+		
+		Utente utente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("utente non trovato"));
+	
+
+		MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/admin/getByUsername")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String responseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+		
+		Assertions.assertThat(getResponse.getId()).isEqualTo(utente.getId());
+		Assertions.assertThat(getResponse.getUsername()).isEqualTo("admin");
+		Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+		Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+		Assertions.assertThat(getResponse.getEmail()).isEqualTo("admin@example.com");
+		Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+		Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.ADMIN);
+	}
+	
+	//*////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+		/**
+		 * Creo un utente amministratore e ne leggo i dati recuperandolo per id usando il servizio user
+		 * @throws Exception
+		 */
+		@Test
+		public void testGetAdminUserByIdUsingUser() throws Exception{
+			utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+			// faccio il login
+
+			String loginAdminReqJSON = objectMapper
+					.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+			MvcResult mvcResult = mockMvc
+					.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+			String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+			LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+			Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+			Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+			
+			String accessToken = loginDTO.getAccessToken();
+				
+			//recupero l'utente da database per averne l'id
+			
+			Utente utente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("utente non trovato"));
+		
+
+			MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/user/getById").queryParam("id", utente.getId().toString())
+					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andReturn();
+			
+			String responseString = mvcResponse.getResponse().getContentAsString();
+
+			UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+			
+			Assertions.assertThat(getResponse.getId()).isEqualTo(utente.getId());
+			Assertions.assertThat(getResponse.getUsername()).isEqualTo("admin");
+			Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+			Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+			Assertions.assertThat(getResponse.getEmail()).isEqualTo("admin@example.com");
+			Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+			Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.ADMIN);
+		}
+		
+		/**
+		 * Creo un utente amministratore e ne leggo i dati recuperandolo per username usando il servizio user
+		 * @throws Exception
+		 */
+		@Test
+		public void testGetAdminUserByUsernameUsingUser() throws Exception{
+			utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+			// faccio il login
+
+			String loginAdminReqJSON = objectMapper
+					.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+			MvcResult mvcResult = mockMvc
+					.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+			String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+			LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+			Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+			Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+			
+			String accessToken = loginDTO.getAccessToken();
+				
+			//recupero l'utente da database per averne l'id
+			
+			Utente utente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("utente non trovato"));
+		
+
+			MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/user/getByUsername").queryParam("username", "admin")
+					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andReturn();
+			
+			String responseString = mvcResponse.getResponse().getContentAsString();
+
+			UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+			
+			Assertions.assertThat(getResponse.getId()).isEqualTo(utente.getId());
+			Assertions.assertThat(getResponse.getUsername()).isEqualTo("admin");
+			Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+			Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+			Assertions.assertThat(getResponse.getEmail()).isEqualTo("admin@example.com");
+			Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+			Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.ADMIN);
+		}
+		
+		/**
+		 * Creo un utente amministratore e uno non amministratore e leggo i dati del secondo utente recuperandolo per id
+		 * usando il servizio user, mi aspetto riesca a leggerli
+		 * @throws Exception
+		 */
+		@Test
+		public void testGetOtherUserByIdByAdminUsingUser() throws Exception{
+			utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+			// faccio il login
+
+			String loginAdminReqJSON = objectMapper
+					.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+
+			MvcResult mvcResult = mockMvc
+					.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+			String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+			LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+			Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+			Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+			
+			String accessToken = loginDTO.getAccessToken();		
+			
+			String altroUtenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("altro_utente").password("altra_password")
+					.email("utente@example.com").build());
+			mockMvc.perform(post("/rest/utente/public/create").content(altroUtenteJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isCreated());
+
+			//mi basta solo creare l'altro utente, non deve fare login
+				
+			//recupero l'altro utente da database per averne l'id
+			
+			Utente altroUtente = utenteRepository.findByUsername("altro_utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+		
+
+			//uso il token di utente per cercare di recuperare i dati di altro_utente, mi aspetto un admin lo trovi
+			MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/user/getById").queryParam("id", altroUtente.getId().toString())
+					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andReturn();
+			
+			String responseString = mvcResponse.getResponse().getContentAsString();
+
+			UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+			
+			Assertions.assertThat(getResponse.getId()).isEqualTo(altroUtente.getId());
+			Assertions.assertThat(getResponse.getUsername()).isEqualTo("altro_utente");
+			Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+			Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+			Assertions.assertThat(getResponse.getEmail()).isEqualTo("utente@example.com");
+			Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+			Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.UTENTE);
+		}
+		
+		/**
+		 * Creo un utente amministratore e uno non amministratore e leggo i dati del secondo utente recuperandolo per username
+		 * usando il servizio user, mi aspetto riesca a leggerli
+		 * @throws Exception
+		 */
+		@Test
+		public void testGetOtherUserByUsernameByAdminUsingUser() throws Exception{
+			utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+			// faccio il login
+
+			String loginAdminReqJSON = objectMapper
+					.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+			MvcResult mvcResult = mockMvc
+					.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+			String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+			LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+			Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+			Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+			
+			String accessToken = loginDTO.getAccessToken();		
+			
+			String altroUtenteJSON = objectMapper.writeValueAsString(UtenteDTO.builder().username("altro_utente").password("altra_password")
+					.email("utente@example.com").build());
+			mockMvc.perform(post("/rest/utente/public/create").content(altroUtenteJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isCreated());
+
+			//mi basta solo creare l'altro utente, non deve fare login
+				
+			//recupero l'altro utente da database per averne l'id
+			
+			Utente altroUtente = utenteRepository.findByUsername("altro_utente").orElseGet(() -> Assertions.fail("utente non trovato"));
+		
+
+			//uso il token di utente per cercare di recuperare i dati di altro_utente, mi aspetto che un admin lo trovi
+			MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/user/getByUsername").queryParam("username", "altro_utente")
+					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andReturn();
+			
+			String responseString = mvcResponse.getResponse().getContentAsString();
+
+			UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+			
+			Assertions.assertThat(getResponse.getId()).isEqualTo(altroUtente.getId());
+			Assertions.assertThat(getResponse.getUsername()).isEqualTo("altro_utente");
+			Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+			Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+			Assertions.assertThat(getResponse.getEmail()).isEqualTo("utente@example.com");
+			Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+			Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.UTENTE);
+		}
+		
+		/**
+		 * Creo un utente amministratore e ne leggo i dati con il servizio get by id  per user, ma non passo query param, mi aspetto usi la login
+		 * @throws Exception
+		 */
+		@Test
+		public void testGetAdminUserByIdByLoginUsingUser() throws Exception{
+			utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+			// faccio il login
+
+			String loginAdminReqJSON = objectMapper
+					.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+			MvcResult mvcResult = mockMvc
+					.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+			String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+			LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+			Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+			Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+			
+			String accessToken = loginDTO.getAccessToken();
+				
+			//recupero l'utente da database per averne l'id
+			
+			Utente utente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("utente non trovato"));
+		
+
+			MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/user/getById")
+					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andReturn();
+			
+			String responseString = mvcResponse.getResponse().getContentAsString();
+
+			UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+			
+			Assertions.assertThat(getResponse.getId()).isEqualTo(utente.getId());
+			Assertions.assertThat(getResponse.getUsername()).isEqualTo("admin");
+			Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+			Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+			Assertions.assertThat(getResponse.getEmail()).isEqualTo("admin@example.com");
+			Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+			Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.ADMIN);
+		}
+		
+		/**
+		 * Creo un utente amministratore e ne leggo con il servizio get by username per user, ma non passo query param, mi aspetto usi la login
+		 * @throws Exception
+		 */
+		@Test
+		public void testGetAdminUserByUsernameByLoginUsingUser() throws Exception{
+			utenteService.create(UtenteReq.builder().username("admin").password("admin").ruolo(Ruolo.ADMIN).email("admin@example.com").build());
+
+			// faccio il login
+
+			String loginAdminReqJSON = objectMapper
+					.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+			MvcResult mvcResult = mockMvc
+					.perform(post("/rest/auth/login").content(loginAdminReqJSON).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+			String loginResponseString = mvcResult.getResponse().getContentAsString();
+
+			LoginDTO loginDTO = objectMapper.readValue(loginResponseString, LoginDTO.class);
+
+			Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+			Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+			
+			String accessToken = loginDTO.getAccessToken();
+				
+			//recupero l'utente da database per averne l'id
+			
+			Utente utente = utenteRepository.findByUsername("admin").orElseGet(() -> Assertions.fail("utente non trovato"));
+		
+
+			MvcResult mvcResponse = mockMvc.perform(get("/rest/utente/user/getByUsername")
+					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andReturn();
+			
+			String responseString = mvcResponse.getResponse().getContentAsString();
+
+			UtenteDTO getResponse = objectMapper.readValue(responseString, UtenteDTO.class);
+			
+			Assertions.assertThat(getResponse.getId()).isEqualTo(utente.getId());
+			Assertions.assertThat(getResponse.getUsername()).isEqualTo("admin");
+			Assertions.assertThat(getResponse.getPassword()).isBlank();//la password non viene  diffusa anche perché sarebbe un hash
+			Assertions.assertThat(getResponse.getCredito()).isEqualTo(creditoDefault);
+			Assertions.assertThat(getResponse.getEmail()).isEqualTo("admin@example.com");
+			Assertions.assertThat(getResponse.getIndirizzo()).isBlank();
+			Assertions.assertThat(getResponse.getRuolo()).isEqualTo(Ruolo.ADMIN);
+		}
 }
