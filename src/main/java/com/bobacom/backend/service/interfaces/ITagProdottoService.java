@@ -10,5 +10,6 @@ public interface ITagProdottoService {
 	void create(TagRequest req) throws Exception;
 	void delete(Integer id) throws Exception;
 	List<TagProdottoDTO> list() throws Exception;
+	List<TagProdottoDTO> listOrdered() throws Exception;
 	TagProdottoDTO getById(Integer id) throws Exception;
 }

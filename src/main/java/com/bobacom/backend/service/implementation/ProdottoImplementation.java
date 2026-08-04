@@ -62,7 +62,6 @@ public class ProdottoImplementation implements IProdottoService{
 		p.setImgUrl(Optional.ofNullable(req.getImgUrl())
 		        .map(String::trim)
 		        .filter(s -> !s.isEmpty())
-		        .map(String::toUpperCase)
 		        .orElseThrow(() -> new AcademyException("prodotto.no.imgurl")));
 		
 		p.setTag(tags.stream().collect(Collectors.toSet())); 

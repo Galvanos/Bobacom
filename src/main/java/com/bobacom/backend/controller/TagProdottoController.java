@@ -35,4 +35,9 @@ public class TagProdottoController {
 	public ResponseEntity<Object> list() throws Exception{
 		return ResponseEntity.ok(tagService.list());
 	}
+	
+	@GetMapping("listOrdered")
+	public ResponseEntity<Object> listOrdered() throws Exception{
+		return ResponseEntity.ok(tagService.listOrdered());
+	}
 }
