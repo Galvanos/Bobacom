@@ -18,5 +18,4 @@ public class PromozioneDTO {
 	private Float sconto;
 	private Boolean isActive;
 	List <Integer> idProdotto;
-
 }

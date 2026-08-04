@@ -16,6 +16,7 @@ import com.bobacom.backend.service.TestKeyValuesService;
 @SelectClasses({
 	TestKeyValuesService.class,
 	ProdottoImplementationTest.class,
+	TestIngredienteService.class,
 	UtenteControllerTest.class,
 	AuthControllerTest.class,
 	CreditoControllerTest.class,

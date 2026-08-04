@@ -1,7 +1,7 @@
 package com.bobacom.backend.model;
 
-
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -19,7 +19,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
+@ToString
 @Builder
 @AllArgsConstructor
 @Getter
@@ -38,22 +40,18 @@ public class Promozione {
 	@Column
 	private Boolean isActive;
 	
+	@Builder.Default
 	@JsonIgnore
 	@ManyToMany(mappedBy = "promozione")
-	List<Prodotto> prodotto;
+	private Set<Prodotto> prodotto = new HashSet<>();
 	
-	@Override
-    public boolean equals(Object o) {
-        if (this == o) return true; // 1. Memory reference check
-        if (o == null || getClass() != o.getClass()) return false; // 2. Class check
-        Promozione that = (Promozione) o;
-        // 3. Compare IDs only if ID is not null
-        return id != null && id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        // 4. Return a constant or class hash so hashCode doesn't change when ID is generated
-        return getClass().hashCode(); 
-    }
+	public void addProdotto(Prodotto prod) {
+		prodotto.add(prod);
+	}
+	public void removeProdotto(Prodotto prod) {
+		prodotto.remove(prod);
+	}
+	public Set<Prodotto> getProdotto() {
+		return prodotto;
+	}
 }
