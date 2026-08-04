@@ -27,8 +27,9 @@ public class TagProdottoController {
 	
 	@PostMapping("create")
 	public ResponseEntity<ResponseDTO> create(@RequestBody (required=true) @Validated(ValidationGroups.Create.class) TagRequest request) throws Exception{
+		log.debug("entered create with req:" + request.toString());
 		tagService.create(request);
-		return ResponseEntity.ok(ResponseDTO.builder().msg("Allergene aggiunto").build());
+		return ResponseEntity.ok(ResponseDTO.builder().msg("Tag aggiunto").build());
 	}
 	
 	@GetMapping("list")
