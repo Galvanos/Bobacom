@@ -91,7 +91,7 @@ public class UtenteController {
 	
 	
 	@GetMapping("/admin/getByUsername")
-	public  ResponseEntity<UtenteDTO> getByUsernameByAdmin(@RequestParam String username,Authentication authentication) throws Exception {
+	public  ResponseEntity<UtenteDTO> getByUsernameByAdmin(@RequestParam(required = false) String username,Authentication authentication) throws Exception {
 		username = Optional.ofNullable(username).orElse(authentication.getName());
 		UtenteDTO byUsername = service.getByUsername(username);
 		byUsername.setPassword(null);//password annullata anche perché sarebbe un hash, non servirebbe a molto
@@ -130,8 +130,8 @@ public class UtenteController {
 	
 	@DeleteMapping("/admin/delete/{id}")
 	public ResponseEntity<ResponseDTO> delete(@PathVariable (required=true) Integer id) throws Exception{
-		UtenteDTO updatedUser = service.delete(id);
-		return ResponseEntity.ok(new ResponseDTO("updated..."));
+		UtenteDTO deletedUser = service.delete(id);
+		return ResponseEntity.ok(new ResponseDTO("deleted..."));
 	}
 	
 	

@@ -129,10 +129,11 @@ public class AuthController {
 	public ResponseEntity<Object> me(Authentication authentication) throws Exception {
 		try {
 			UtenteDTO byUsernameByUser = utenteService.getByUsernameByUser(authentication.getName());
-			//mi servono solo Id, username e ruolo dell'utente qui
+			//mi servono solo Id, username e ruolo dell'utente qui, mi tengo anche il credito per inizializzarlo al login
 			UtenteDTO toReturn = UtenteDTO.builder().id(byUsernameByUser.getId())
 					.username(byUsernameByUser.getUsername())
 					.ruolo(byUsernameByUser.getRuolo())
+					.credito(byUsernameByUser.getCredito())
 					.build();
 			return ResponseEntity.ok(toReturn);
 		}catch(UserNotFoundException userNotFoundException) {

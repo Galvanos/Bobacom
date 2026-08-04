@@ -32,7 +32,9 @@ public class UtenteReq {
 	@Email
 	private String email;
 	@NotNull(groups = ValidationGroups.Create.class, message = "password non fornita"  )
-	private String password;
+	private String password;//non sono stati posti vincoli sul contenuto della password secondo le linee guida del NIST 
+							//https://pages.nist.gov/800-63-4/sp800-63b.html#passwordusability
+							//in particolare una password che richiede caratteri speciali rischia di venire scritta da qualche parte compromettendone la sicurezza
 	private Ruolo ruolo;//in caso di ruolo null si impone user
 	private BigDecimal credito;//credito non obbligatorio, non aggiornabile direttamente da tente
 	private String indirizzo;//indirizzo non obbligatorio

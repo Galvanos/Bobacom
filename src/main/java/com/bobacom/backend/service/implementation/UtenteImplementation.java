@@ -20,14 +20,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bobacom.backend.dto.input.AddCreditReq;
+import com.bobacom.backend.dto.input.DecreaseCreditReq;
 import com.bobacom.backend.dto.input.UtenteReq;
+import com.bobacom.backend.dto.map.UtenteMap;
 import com.bobacom.backend.dto.output.UtenteDTO;
 import com.bobacom.backend.enums.Ruolo;
 import com.bobacom.backend.exceptions.AcademyException;
 import com.bobacom.backend.exceptions.ForbiddenException;
 import com.bobacom.backend.exceptions.UnauthorizedException;
 import com.bobacom.backend.exceptions.UserNotFoundException;
-import com.bobacom.backend.mapping.UtenteMap;
 import com.bobacom.backend.model.Utente;
 import com.bobacom.backend.repository.IUtenteRepository;
 import com.bobacom.backend.service.interfaces.IUtenteService;
@@ -140,9 +141,6 @@ public class UtenteImplementation implements IUtenteService {
 					storedUser.setUsername(requestUsername);
 				}
 			}
-		}else {
-			//per updateUtenteForAuthentication devo forzare lo username, probabilmente non servirà più
-			req.setUsername(formerUsername);
 		}
 		
 		String encodedPassword = storedUser.getPassword();
@@ -177,8 +175,16 @@ public class UtenteImplementation implements IUtenteService {
 				Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 				boolean isAdmin = authorities.stream().map(t -> t.getAuthority()).anyMatch(t -> Objects.equals(t, "ROLE_"+Ruolo.ADMIN.name()));
 				boolean differentUsername = !Objects.equals(username, storedUser.getUsername());
+				//se non è amministratore e il nome loggato è diverso dal nome memorizzato non è autorizzato
 				if(!isAdmin && differentUsername) {
 					throw new ForbiddenException("utente non autorizzato");
+				}
+				//verifico se il nome richiesto dall'update è diverso da quello memorizzato, per gli admin fallisce con bad request e dovrebbe fallire con bad request anche per i non admin
+				if(req.getUsername() != null) {
+					boolean differentUsernameInRequest = !Objects.equals(req.getUsername(), storedUser.getUsername());
+					if(differentUsernameInRequest) {
+						throw new AcademyException("cambio username non consentito");
+					}
 				}
 			}else {
 				throw new UnauthorizedException("utente non autorizzato");
@@ -211,6 +217,16 @@ public class UtenteImplementation implements IUtenteService {
 	public UtenteDTO delete(Integer id) throws Exception {
 		Utente storedUser = repository.findById(id)
 				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
+		//impedisco all'utente loggato di cancellare sé stesso in modo da non compromettere il login
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if(authentication != null) {
+			if(authentication.isAuthenticated()) {
+				String authenticatedUsername = authentication.getName();
+				if(Objects.equals(storedUser.getUsername(), authenticatedUsername)) {
+					throw new ForbiddenException("non consentito cancellare lo stesso utente loggato");
+				}
+			}
+		}
 		repository.delete(storedUser);
 		return UtenteMap.buildUtenteDTO(storedUser, false);
 		
@@ -240,6 +256,7 @@ public class UtenteImplementation implements IUtenteService {
 		return UtenteMap.buildUtenteDTO(storedUser, false);
 	}
 
+	
 
 	@Override
 	public UtenteDTO addCreditByUser(AddCreditReq addCreditReq) throws Exception {
@@ -264,6 +281,55 @@ public class UtenteImplementation implements IUtenteService {
 			}
 		}
 		return addCredit(addCreditReq);
+	}
+	
+	@Transactional
+	@Override
+	public UtenteDTO decreaseCredit(DecreaseCreditReq decreaseCreditReq) throws Exception {
+		Integer userId = decreaseCreditReq.getUserId();
+		if(userId == null) {
+			throw new AcademyException("utente non fornito");
+		}
+		Utente storedUser = repository.findById(userId)
+				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
+		BigDecimal credito = storedUser.getCredito();
+		if(credito == null) {
+			credito = BigDecimal.ZERO;
+		}
+		BigDecimal decreasingCredit = decreaseCreditReq.getCredit();
+		if(credito.compareTo(decreasingCredit) < 0) {
+			throw new AcademyException("credito insufficiente");
+		}
+		BigDecimal resultingCredit = credito.subtract(decreasingCredit);
+		storedUser.setCredito(resultingCredit);
+		storedUser = repository.save(storedUser);
+		return UtenteMap.buildUtenteDTO(storedUser, false);
+	}
+
+
+	@Override
+	public UtenteDTO decreaseCreditByUser(DecreaseCreditReq decreaseCreditReq) throws Exception {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		Utente foundUser = null;
+		if(authentication != null) {
+			if(authentication.isAuthenticated()) {
+				String username = authentication.getName();
+				foundUser = repository.findByUsername(username).orElseThrow( () -> new UserNotFoundException("utente non trovato"));
+				Integer foundUserId = foundUser.getId();
+				decreaseCreditReq.setUserId(Optional.ofNullable(decreaseCreditReq).map(DecreaseCreditReq::getUserId).orElse(foundUserId));
+				Integer requestUserId = decreaseCreditReq.getUserId();
+				if(!Objects.equals(requestUserId,foundUserId)) {
+					Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+					boolean isAdmin = authorities.stream().map(t -> t.getAuthority()).anyMatch(t -> Objects.equals(t, "ROLE_"+Ruolo.ADMIN.name()));
+					if(!isAdmin) {
+						throw new ForbiddenException("utente non autorizzato");
+					}
+				}
+			}else {
+				throw new UnauthorizedException("utente non autorizzato");
+			}
+		}
+		return decreaseCredit(decreaseCreditReq);
 	}
 
 

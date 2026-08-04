@@ -26,7 +26,8 @@ public class AddCreditReq {
 
 	/**
 	 * Id dell'utente a cui aumentare il credito, se un utente è loggato si assume che conosca il suo id,
-	 * se è  un admin si assume che sappia l'id dell'utente da aggiornare, non serve password perché sono sempre loggati
+	 * se è  un admin si assume che sappia l'id dell'utente da aggiornare, non serve password perché sono sempre loggati,
+	 * se omesso recupera i dati dell'utente loggato
 	 */
 	private Integer userId;
 	/**

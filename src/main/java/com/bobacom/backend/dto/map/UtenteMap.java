@@ -1,4 +1,4 @@
-package com.bobacom.backend.mapping;
+package com.bobacom.backend.dto.map;
 
 import java.util.Collection;
 import java.util.Comparator;

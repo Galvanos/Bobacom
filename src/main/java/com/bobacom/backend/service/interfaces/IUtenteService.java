@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 
 import com.bobacom.backend.dto.input.AddCreditReq;
+import com.bobacom.backend.dto.input.DecreaseCreditReq;
 import com.bobacom.backend.dto.input.UtenteReq;
 import com.bobacom.backend.dto.output.UtenteDTO;
 
@@ -66,7 +67,7 @@ public interface IUtenteService {
 	UtenteDTO getByUsernameByUser(String username) throws Exception;
 	List<UtenteDTO> list() throws Exception;
 	/**
-	 * Cancella un utente
+	 * Cancella un utente, un utente non può cancellare sè stesso qualora sia loggato perché ci sarebbe un problema di autenticazione
 	 * @param id id dell'utente da cancellare
 	 * @return l'utente appena cancellato
 	 * @throws Exception in caso di errori, tra cui utente inesistente
@@ -88,4 +89,21 @@ public interface IUtenteService {
 	 * @throws Exception in caso di errori
 	 */
 	UtenteDTO addCreditByUser(AddCreditReq addCreditReq) throws Exception;
+	
+	/**
+	 * Funzione richiamabile da admin per diminuire il credito
+	 * @param decreaseCreditReq richiesta per diminuire il credito
+	 * @return l'utente dopo che gli è stato diminuito il credito
+	 * @throws Exception  in caso di errori
+	 */
+	UtenteDTO decreaseCredit(DecreaseCreditReq decreaseCreditReq) throws Exception;
+	
+	
+	/**
+	 * Funzione richiamabile dall'utente per diminuire il credito
+	 * @param decreaseCreditReq richiesta per diminuire il credito
+	 * @return l'utente dopo che gli è stato diminuito il credito
+	 * @throws Exception  in caso di errori
+	 */
+	UtenteDTO decreaseCreditByUser(DecreaseCreditReq decreaseCreditReq) throws Exception;
 }
