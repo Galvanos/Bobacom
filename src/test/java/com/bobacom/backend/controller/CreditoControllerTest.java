@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
@@ -22,6 +23,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bobacom.backend.dto.input.AddCreditReq;
+import com.bobacom.backend.dto.input.DecreaseCreditReq;
 import com.bobacom.backend.dto.input.LoginReq;
 import com.bobacom.backend.dto.input.UtenteReq;
 import com.bobacom.backend.dto.output.LoginDTO;
@@ -217,6 +219,102 @@ public class CreditoControllerTest {
 		
 	}
 	
+	/**
+	 * Provo ad aggiungere credito con il secret sbagliato, mi aspetto che fallisca
+	 * @throws Exception 
+	 */
+	@Test
+	public void testAddCreditoWrongSecret() throws Exception {
+		// creo un utente normale con privilegi utente
+		UtenteDTO createdUtenteDTO = utenteService.create(
+				UtenteReq.builder().username("utente").password("password").email("utente@example.com").build());
+
+		//faccio login
+		
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+		
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+		
+		//per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+		
+		AddCreditReq addCreditoRequest = AddCreditReq.builder()
+											.credit(BigDecimal.valueOf(100))
+											.secret(creditoSecret+"_suffisso_per_invalidare_secret")
+											.userId(createdUtenteDTO.getId())
+											.build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+		
+		mockMvc.perform(patch("/rest/credito/user/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+		
+	}
+	
+	/**
+	 * Provo ad aggiungere credito a un utente inesistente, mi aspetto che fallisca anche perché è un altro utente
+	 * @throws Exception 
+	 */
+	@Test
+	public void testAddCreditoNotExisting() throws Exception {
+		// creo un utente normale con privilegi utente
+		UtenteDTO createdUtenteDTO = utenteService.create(
+				UtenteReq.builder().username("utente").password("password").email("utente@example.com").build());
+
+		//faccio login
+		
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+		
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+		
+		//per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+		
+		Assertions.assertThat(createdUtenteDTO.getId()).isNotEqualTo(Integer.MAX_VALUE);
+		
+		AddCreditReq addCreditoRequest = AddCreditReq.builder()
+											.credit(BigDecimal.valueOf(100))
+											.secret(creditoSecret)
+											.userId(Integer.MAX_VALUE)
+											.build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+		
+		mockMvc.perform(patch("/rest/credito/user/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isForbidden());
+		
+	}
+	
 	//*/////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	/**
@@ -279,7 +377,7 @@ public class CreditoControllerTest {
 	
 	
 	/**
-	 * Creo un utente e vi aggiungo il credito, ma lo identifico tramite la login,
+	 * Creo un utente amministratore e vi aggiungo il credito, ma lo identifico tramite la login,
 	 * senza quindi fornire nel json l'id utente
 	 * 
 	 * @throws Exception
@@ -337,7 +435,7 @@ public class CreditoControllerTest {
 	
 	/**
 	 * Creo un utente amministratore e un utente senza privilegi amministrativi e
-	 * provo ad aggiungere credito al secondo utente da parte dellámministratore, mi
+	 * provo ad aggiungere credito al secondo utente da parte dell'amministratore, mi
 	 * aspetto che si possa fare
 	 * 
 	 * @throws Exception
@@ -395,6 +493,1140 @@ public class CreditoControllerTest {
 		Assertions.assertThat(creditoIncrease).isEqualTo(BigDecimal.valueOf(100));
 
 	}
-	//TODO fare test con secret non valido
-	//TODO riprendere qui con i test di add credito da parte dell'amministratore usando il servizio da utente e successivamente i test di decrease credito con enfasi anche sul provare a superare il limite
+	
+	/**
+	 * Provo ad aggiungere credito con il secret sbagliato a un utente
+	 * amministratore, mi aspettto che fallisca
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testAddCreditoWrongSecretByAdmin() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
+				.secret(creditoSecret + "_suffisso_per_invalidare_secret").userId(createdUtenteDTO.getId()).build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+
+		mockMvc.perform(patch("/rest/credito/admin/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+
+	}
+	
+	/**
+	 * Provo ad aggiungere credito a un utente inesistente da parte di un
+	 * amministratore, mi aspetto che fallisca
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testAddCreditoNotExistingByAdmin() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		Assertions.assertThat(createdUtenteDTO.getId()).isNotEqualTo(Integer.MAX_VALUE);
+
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+				.userId(Integer.MAX_VALUE).build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+
+		mockMvc.perform(patch("/rest/credito/admin/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+
+	}
+	
+	//*/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	//*/////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	/**
+	 * Creo un utente amministrativo e vi aggiungo il credito facendogli usare il servizio per utente
+	 * @throws Exception 
+	 */
+	@Test
+	public void testAddCreditoByAdminUsingUser() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(
+				UtenteReq.builder().username("admin").password("admin").email("admin@example.com")
+				.ruolo(Ruolo.ADMIN).build());
+
+		//faccio login
+		
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+		
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+		
+		//per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+		
+		AddCreditReq addCreditoRequest = AddCreditReq.builder()
+											.credit(BigDecimal.valueOf(100))
+											.secret(creditoSecret)
+											.userId(createdUtenteDTO.getId())
+											.build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+		
+		MvcResult mvcResponse = mockMvc.perform(patch("/rest/credito/user/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String addCreditoResponseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO utenteAfterAddCredito = objectMapper.readValue(addCreditoResponseString, UtenteDTO.class);
+		
+		Assertions.assertThat(utenteAfterAddCredito.getId()).isEqualTo(createdUtenteDTO.getId());
+		Assertions.assertThat(utenteAfterAddCredito.getUsername()).isEqualTo(createdUtenteDTO.getUsername());
+		BigDecimal resultingCredito = utenteAfterAddCredito.getCredito();
+		BigDecimal creditoIncrease = resultingCredito.subtract(originalCredito);
+		Assertions.assertThat(creditoIncrease).isEqualTo(BigDecimal.valueOf(100));
+		
+	}
+	
+	
+	/**
+	 * Creo un utente amministratore e vi aggiungo il credito, ma lo identifico tramite la login,
+	 * senza quindi fornire nel json l'id utente usando il servizio per utente
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testAddCreditoByLoginByAdminUsingUser() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+				.build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+
+		MvcResult mvcResponse = mockMvc.perform(patch("/rest/credito/user/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+
+		String addCreditoResponseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO utenteAfterAddCredito = objectMapper.readValue(addCreditoResponseString, UtenteDTO.class);
+
+		Assertions.assertThat(utenteAfterAddCredito.getId()).isEqualTo(createdUtenteDTO.getId());
+		Assertions.assertThat(utenteAfterAddCredito.getUsername()).isEqualTo(createdUtenteDTO.getUsername());
+		BigDecimal resultingCredito = utenteAfterAddCredito.getCredito();
+		BigDecimal creditoIncrease = resultingCredito.subtract(originalCredito);
+		Assertions.assertThat(creditoIncrease).isEqualTo(BigDecimal.valueOf(100));
+
+	}
+	
+	
+	/**
+	 * Creo un utente amministratore e un utente senza privilegi amministrativi e
+	 * provo ad aggiungere credito al secondo utente da parte dell'amministratore usando il servizio per utente, mi
+	 * aspetto che si possa fare
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testAddCreditoOtherUserByAdminUsingUser() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		// creo un secondo utente normale con privilegi utente
+		UtenteDTO altroUtenteDTO = utenteService.create(UtenteReq.builder().username("altro").password("altra_password")
+				.email("altro_utente@example.com").build());
+
+		BigDecimal originalCredito = altroUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+				.userId(altroUtenteDTO.getId()).build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+
+		MvcResult mvcResponse = mockMvc.perform(patch("/rest/credito/user/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+
+		String addCreditoResponseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO utenteAfterAddCredito = objectMapper.readValue(addCreditoResponseString, UtenteDTO.class);
+
+		Assertions.assertThat(utenteAfterAddCredito.getId()).isEqualTo(altroUtenteDTO.getId());
+		Assertions.assertThat(utenteAfterAddCredito.getUsername()).isEqualTo(altroUtenteDTO.getUsername());
+		BigDecimal resultingCredito = utenteAfterAddCredito.getCredito();
+		BigDecimal creditoIncrease = resultingCredito.subtract(originalCredito);
+		Assertions.assertThat(creditoIncrease).isEqualTo(BigDecimal.valueOf(100));
+
+	}
+	
+	/**
+	 * Provo ad aggiungere credito con il secret sbagliato a un utente
+	 * amministratore usando il servizio per utente, mi aspettto che fallisca
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testAddCreditoWrongSecretByAdminUsingUser() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
+				.secret(creditoSecret + "_suffisso_per_invalidare_secret").userId(createdUtenteDTO.getId()).build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+
+		mockMvc.perform(patch("/rest/credito/user/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+
+	}
+	
+	/**
+	 * Provo ad aggiungere credito a un utente inesistente da parte di un
+	 * amministratore usando il servizio per utente, mi aspetto che fallisca
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testAddCreditoNotExistingByAdminUsingUser() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		Assertions.assertThat(createdUtenteDTO.getId()).isNotEqualTo(Integer.MAX_VALUE);
+
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+				.userId(Integer.MAX_VALUE).build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+
+		mockMvc.perform(patch("/rest/credito/admin/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+
+	}
+	
+	//*/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+		//*/////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	//*///////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	/**
+	 * Creo un utente e vi sottraggo il credito
+	 * @throws Exception 
+	 */
+	@Test
+	public void testDecreaseCredito() throws Exception {
+		// creo un utente normale con privilegi utente
+		UtenteDTO createdUtenteDTO = utenteService.create(
+				UtenteReq.builder().username("utente").password("password").credito(BigDecimal.valueOf(100)).email("utente@example.com").build());
+
+		//faccio login
+		
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+		
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+		
+		//per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+		
+		DecreaseCreditReq decreaseCreditoRequest = DecreaseCreditReq.builder()
+											.credit(BigDecimal.TEN)
+											.userId(createdUtenteDTO.getId())
+											.build();
+
+		String decreaseCreditoRequestJson = objectMapper.writeValueAsString(decreaseCreditoRequest);
+		
+		MvcResult mvcResponse = mockMvc.perform(patch("/rest/credito/user/decreaseCredito").content(decreaseCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String decreaseCreditoResponseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO utenteAfterDecreaseCredito = objectMapper.readValue(decreaseCreditoResponseString, UtenteDTO.class);
+		
+		Assertions.assertThat(utenteAfterDecreaseCredito.getId()).isEqualTo(createdUtenteDTO.getId());
+		Assertions.assertThat(utenteAfterDecreaseCredito.getUsername()).isEqualTo(createdUtenteDTO.getUsername());
+		BigDecimal resultingCredito = utenteAfterDecreaseCredito.getCredito();
+		BigDecimal creditoDecrease = originalCredito.subtract(resultingCredito);
+		Assertions.assertThat(creditoDecrease).isEqualTo(BigDecimal.TEN);
+		
+	}
+	
+	
+	/**
+	 * Creo un utente e vi sottraggo il credito, ma lo identifico tramite la login,
+	 * senza quindi fornire nel json l'id utente
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testDecreaseCreditoByLogin() throws Exception {
+		// creo un utente normale con privilegi utente
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("utente").password("password")
+				.credito(BigDecimal.valueOf(100)).email("utente@example.com").build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		DecreaseCreditReq decreaseCreditoRequest = DecreaseCreditReq.builder().credit(BigDecimal.TEN).build();
+
+		String decreaseCreditoRequestJson = objectMapper.writeValueAsString(decreaseCreditoRequest);
+
+		MvcResult mvcResponse = mockMvc.perform(patch("/rest/credito/user/decreaseCredito")
+				.content(decreaseCreditoRequestJson).header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+				.contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+
+		String decreaseCreditoResponseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO utenteAfterDecreaseCredito = objectMapper.readValue(decreaseCreditoResponseString, UtenteDTO.class);
+
+		Assertions.assertThat(utenteAfterDecreaseCredito.getId()).isEqualTo(createdUtenteDTO.getId());
+		Assertions.assertThat(utenteAfterDecreaseCredito.getUsername()).isEqualTo(createdUtenteDTO.getUsername());
+		BigDecimal resultingCredito = utenteAfterDecreaseCredito.getCredito();
+		BigDecimal creditoDecrease = originalCredito.subtract(resultingCredito);
+		Assertions.assertThat(creditoDecrease).isEqualTo(BigDecimal.TEN);
+
+	}
+	
+	
+	/**
+	 * Creo due utenti utente e provo ad sottrarre credito al secondo utente da
+	 * parte del primo utente, mi aspetto di fallire
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testDecreaseCreditoOtherUser() throws Exception {
+		// creo un utente normale con privilegi utente
+		UtenteDTO createdUtenteDTO = utenteService.create(
+				UtenteReq.builder().username("utente").password("password").email("utente@example.com").build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		// creo un secondo utente normale con privilegi utente
+		UtenteDTO altroUtenteDTO = utenteService.create(UtenteReq.builder().username("altro").password("altra_password")
+				.email("altro_utente@example.com").build());
+
+		BigDecimal originalCredito = altroUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		DecreaseCreditReq decreaseCreditoRequest = DecreaseCreditReq.builder().credit(BigDecimal.TEN)
+				.userId(altroUtenteDTO.getId()).build();
+
+		String decreaseCreditoRequestJson = objectMapper.writeValueAsString(decreaseCreditoRequest);
+
+		mockMvc.perform(patch("/rest/credito/user/decreaseCredito").content(decreaseCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isForbidden());
+
+	}
+	
+	
+	/**
+	 * Provo ad sottrarre credito a un utente inesistente, mi aspetto che fallisca
+	 * anche perché è un altro utente
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testDecreaseCreditoNotExisting() throws Exception {
+		// creo un utente normale con privilegi utente
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("utente").password("password")
+				.credito(BigDecimal.valueOf(100)).email("utente@example.com").build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		Assertions.assertThat(createdUtenteDTO.getId()).isNotEqualTo(Integer.MAX_VALUE);
+
+		DecreaseCreditReq decreaseCreditoRequest = DecreaseCreditReq.builder().credit(BigDecimal.TEN)
+				.userId(Integer.MAX_VALUE).build();
+
+		String decreaseCreditoRequestJson = objectMapper.writeValueAsString(decreaseCreditoRequest);
+
+		mockMvc.perform(patch("/rest/credito/user/decreaseCredito").content(decreaseCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isForbidden());
+
+	}
+	
+	// */////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Creo un utente amministrativo e vi sottraggo il credito
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testDecreaseCreditoByAdmin() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.credito(BigDecimal.valueOf(100))
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		DecreaseCreditReq decreaseCreditoRequest = DecreaseCreditReq.builder().credit(BigDecimal.TEN)
+				.userId(createdUtenteDTO.getId()).build();
+
+		String decreaseCreditoRequestJson = objectMapper.writeValueAsString(decreaseCreditoRequest);
+
+		MvcResult mvcResponse = mockMvc.perform(patch("/rest/credito/user/decreaseCredito")
+				.content(decreaseCreditoRequestJson).header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+				.contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+
+		String decreaseCreditoResponseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO utenteAfterDecreaseCredito = objectMapper.readValue(decreaseCreditoResponseString, UtenteDTO.class);
+
+		Assertions.assertThat(utenteAfterDecreaseCredito.getId()).isEqualTo(createdUtenteDTO.getId());
+		Assertions.assertThat(utenteAfterDecreaseCredito.getUsername()).isEqualTo(createdUtenteDTO.getUsername());
+		BigDecimal resultingCredito = utenteAfterDecreaseCredito.getCredito();
+		BigDecimal creditoDecrease = originalCredito.subtract(resultingCredito);
+		Assertions.assertThat(creditoDecrease).isEqualTo(BigDecimal.TEN);
+
+	}
+	
+	
+	/**
+	 * Creo un utente amministratore e vi sottraggo il credito, ma lo identifico
+	 * tramite la login, senza quindi fornire nel json l'id utente
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testDecreaseCreditoByLoginByAdmin() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.credito(BigDecimal.valueOf(100)).email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		DecreaseCreditReq decreaseCreditoRequest = DecreaseCreditReq.builder().credit(BigDecimal.TEN).build();
+
+		String decreaseCreditoRequestJson = objectMapper.writeValueAsString(decreaseCreditoRequest);
+
+		MvcResult mvcResponse = mockMvc.perform(patch("/rest/credito/user/decreaseCredito")
+				.content(decreaseCreditoRequestJson).header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+				.contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+
+		String decreaseCreditoResponseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO utenteAfterDecreaseCredito = objectMapper.readValue(decreaseCreditoResponseString, UtenteDTO.class);
+
+		Assertions.assertThat(utenteAfterDecreaseCredito.getId()).isEqualTo(createdUtenteDTO.getId());
+		Assertions.assertThat(utenteAfterDecreaseCredito.getUsername()).isEqualTo(createdUtenteDTO.getUsername());
+		BigDecimal resultingCredito = utenteAfterDecreaseCredito.getCredito();
+		BigDecimal creditoDecrease = originalCredito.subtract(resultingCredito);
+		Assertions.assertThat(creditoDecrease).isEqualTo(BigDecimal.TEN);
+
+	}
+	
+	
+	/**
+	 * Creo un utente amministratore e un utente senza privilegi amministrativi e
+	 * provo ad sottrarre credito al secondo utente da parte dell'amministratore, mi
+	 * aspetto che si possa fare
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testDecreaseCreditoOtherUserByAdmin() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		// creo un secondo utente normale con privilegi utente
+		UtenteDTO altroUtenteDTO = utenteService.create(UtenteReq.builder().username("altro").password("altra_password")
+				.email("altro_utente@example.com").build());
+
+		BigDecimal originalCredito = altroUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		DecreaseCreditReq decreaseCreditoRequest = DecreaseCreditReq.builder().credit(BigDecimal.TEN)
+				.userId(altroUtenteDTO.getId()).build();
+
+		String decreaseCreditoRequestJson = objectMapper.writeValueAsString(decreaseCreditoRequest);
+
+		MvcResult mvcResponse = mockMvc.perform(patch("/rest/credito/user/decreaseCredito").content(decreaseCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+
+		String decreaseCreditoResponseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO utenteAfterDecreaseCredito = objectMapper.readValue(decreaseCreditoResponseString, UtenteDTO.class);
+
+		Assertions.assertThat(utenteAfterDecreaseCredito.getId()).isEqualTo(altroUtenteDTO.getId());
+		Assertions.assertThat(utenteAfterDecreaseCredito.getUsername()).isEqualTo(altroUtenteDTO.getUsername());
+		BigDecimal resultingCredito = utenteAfterDecreaseCredito.getCredito();
+		BigDecimal creditoDecrease = originalCredito.subtract(resultingCredito);
+		Assertions.assertThat(creditoDecrease).isEqualTo(BigDecimal.TEN);
+
+	}
+	
+	/*
+	 * Provo ad aggiungere credito con il secret sbagliato a un utente
+	 * amministratore, mi aspettto che fallisca
+	 * 
+	 * @throws Exception
+	 *
+	@Test
+	public void testAddCreditoWrongSecretByAdmin() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
+				.secret(creditoSecret + "_suffisso_per_invalidare_secret").userId(createdUtenteDTO.getId()).build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+
+		mockMvc.perform(patch("/rest/credito/admin/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+
+	}
+	
+	/*
+	 * Provo ad aggiungere credito a un utente inesistente da parte di un
+	 * amministratore, mi aspetto che fallisca
+	 * 
+	 * @throws Exception
+	 *
+	@Test
+	public void testAddCreditoNotExistingByAdmin() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		Assertions.assertThat(createdUtenteDTO.getId()).isNotEqualTo(Integer.MAX_VALUE);
+
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+				.userId(Integer.MAX_VALUE).build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+
+		mockMvc.perform(patch("/rest/credito/admin/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+
+	}
+	
+	//*/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	//*/////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	/*
+	 * Creo un utente amministrativo e vi aggiungo il credito facendogli usare il servizio per utente
+	 * @throws Exception 
+	 *
+	@Test
+	public void testAddCreditoByAdminUsingUser() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(
+				UtenteReq.builder().username("admin").password("admin").email("admin@example.com")
+				.ruolo(Ruolo.ADMIN).build());
+
+		//faccio login
+		
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+		
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+		
+		//per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+		
+		AddCreditReq addCreditoRequest = AddCreditReq.builder()
+											.credit(BigDecimal.valueOf(100))
+											.secret(creditoSecret)
+											.userId(createdUtenteDTO.getId())
+											.build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+		
+		MvcResult mvcResponse = mockMvc.perform(patch("/rest/credito/user/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+		
+		String addCreditoResponseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO utenteAfterAddCredito = objectMapper.readValue(addCreditoResponseString, UtenteDTO.class);
+		
+		Assertions.assertThat(utenteAfterAddCredito.getId()).isEqualTo(createdUtenteDTO.getId());
+		Assertions.assertThat(utenteAfterAddCredito.getUsername()).isEqualTo(createdUtenteDTO.getUsername());
+		BigDecimal resultingCredito = utenteAfterAddCredito.getCredito();
+		BigDecimal creditoIncrease = resultingCredito.subtract(originalCredito);
+		Assertions.assertThat(creditoIncrease).isEqualTo(BigDecimal.valueOf(100));
+		
+	}
+	
+	
+	/*
+	 * Creo un utente e vi aggiungo il credito, ma lo identifico tramite la login,
+	 * senza quindi fornire nel json l'id utente usando il servizio per utente
+	 * 
+	 * @throws Exception
+	 *
+	@Test
+	public void testAddCreditoByLoginByAdminUsingUser() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+				.build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+
+		MvcResult mvcResponse = mockMvc.perform(patch("/rest/credito/user/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+
+		String addCreditoResponseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO utenteAfterAddCredito = objectMapper.readValue(addCreditoResponseString, UtenteDTO.class);
+
+		Assertions.assertThat(utenteAfterAddCredito.getId()).isEqualTo(createdUtenteDTO.getId());
+		Assertions.assertThat(utenteAfterAddCredito.getUsername()).isEqualTo(createdUtenteDTO.getUsername());
+		BigDecimal resultingCredito = utenteAfterAddCredito.getCredito();
+		BigDecimal creditoIncrease = resultingCredito.subtract(originalCredito);
+		Assertions.assertThat(creditoIncrease).isEqualTo(BigDecimal.valueOf(100));
+
+	}
+	
+	
+	/*
+	 * Creo un utente amministratore e un utente senza privilegi amministrativi e
+	 * provo ad aggiungere credito al secondo utente da parte dell'amministratore usando il servizio per utente, mi
+	 * aspetto che si possa fare
+	 * 
+	 * @throws Exception
+	 *
+	@Test
+	public void testAddCreditoOtherUserByAdminUsingUser() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		// creo un secondo utente normale con privilegi utente
+		UtenteDTO altroUtenteDTO = utenteService.create(UtenteReq.builder().username("altro").password("altra_password")
+				.email("altro_utente@example.com").build());
+
+		BigDecimal originalCredito = altroUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+				.userId(altroUtenteDTO.getId()).build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+
+		MvcResult mvcResponse = mockMvc.perform(patch("/rest/credito/user/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andReturn();
+
+		String addCreditoResponseString = mvcResponse.getResponse().getContentAsString();
+
+		UtenteDTO utenteAfterAddCredito = objectMapper.readValue(addCreditoResponseString, UtenteDTO.class);
+
+		Assertions.assertThat(utenteAfterAddCredito.getId()).isEqualTo(altroUtenteDTO.getId());
+		Assertions.assertThat(utenteAfterAddCredito.getUsername()).isEqualTo(altroUtenteDTO.getUsername());
+		BigDecimal resultingCredito = utenteAfterAddCredito.getCredito();
+		BigDecimal creditoIncrease = resultingCredito.subtract(originalCredito);
+		Assertions.assertThat(creditoIncrease).isEqualTo(BigDecimal.valueOf(100));
+
+	}
+	
+	/*
+	 * Provo ad aggiungere credito con il secret sbagliato a un utente
+	 * amministratore usando il servizio per utente, mi aspettto che fallisca
+	 * 
+	 * @throws Exception
+	 *
+	@Test
+	public void testAddCreditoWrongSecretByAdminUsingUser() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
+				.secret(creditoSecret + "_suffisso_per_invalidare_secret").userId(createdUtenteDTO.getId()).build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+
+		mockMvc.perform(patch("/rest/credito/user/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+
+	}
+	
+	/*
+	 * Provo ad aggiungere credito a un utente inesistente da parte di un
+	 * amministratore usando il servizio per utente, mi aspetto che fallisca
+	 * 
+	 * @throws Exception
+	 *
+	@Test
+	public void testAddCreditoNotExistingByAdminUsingUser() throws Exception {
+		// creo un utente admin con privilegi admin
+		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
+				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
+
+		// faccio login
+
+		String loginReqJSON = objectMapper
+				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
+
+		MvcResult mvcResult = mockMvc
+				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
+
+		String responseString = mvcResult.getResponse().getContentAsString();
+
+		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
+
+		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
+		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
+
+		String accessToken = loginDTO.getAccessToken();
+
+		BigDecimal originalCredito = createdUtenteDTO.getCredito();
+
+		// per definizione, se null corrisponde a zero
+		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
+
+		Assertions.assertThat(createdUtenteDTO.getId()).isNotEqualTo(Integer.MAX_VALUE);
+
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+				.userId(Integer.MAX_VALUE).build();
+
+		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
+
+		mockMvc.perform(patch("/rest/credito/admin/addCredito").content(addCreditoRequestJson)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+
+	}
+	
+	//*///////////////////////////////////////////////////////////////////////////
+	
+	//TODO creare test con credito insufficiente per il decrease
 }
