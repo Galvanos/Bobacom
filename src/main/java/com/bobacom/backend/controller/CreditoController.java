@@ -63,7 +63,13 @@ public class CreditoController {
 	
 	
 	@PatchMapping("/user/decreaseCredito")
-	public ResponseEntity<UtenteDTO> decreaseCreditoByUser(@RequestBody DecreaseCreditReq req) throws Exception{
+	public ResponseEntity<UtenteDTO> decreaseCreditoByUser(@RequestBody DecreaseCreditReq req,Authentication authentication) throws Exception{
+		Integer userId = req.getUserId();
+		if(userId == null) {
+			UtenteDTO byUsername = utenteService.getByUsername(authentication.getName());
+			userId = byUsername.getId();
+			req.setUserId(userId);
+		}
 		UtenteDTO updatedUtenteDTO = utenteService.decreaseCreditByUser(req);
 		UtenteDTO toReturn = UtenteDTO.builder()
 				.credito(updatedUtenteDTO.getCredito())
@@ -75,7 +81,13 @@ public class CreditoController {
 	
 	
 	@PatchMapping("/admin/decreaseCredito")
-	public ResponseEntity<UtenteDTO> decreaseCreditoByAdmin(@RequestBody DecreaseCreditReq req) throws Exception{
+	public ResponseEntity<UtenteDTO> decreaseCreditoByAdmin(@RequestBody DecreaseCreditReq req,Authentication authentication) throws Exception{
+		Integer userId = req.getUserId();
+		if(userId == null) {
+			UtenteDTO byUsername = utenteService.getByUsername(authentication.getName());
+			userId = byUsername.getId();
+			req.setUserId(userId);
+		}
 		UtenteDTO updatedUtenteDTO = utenteService.decreaseCredit(req);
 		UtenteDTO toReturn = UtenteDTO.builder()
 				.credito(updatedUtenteDTO.getCredito())
