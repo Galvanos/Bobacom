@@ -19,7 +19,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
+@ToString
 @Builder
 @AllArgsConstructor
 @Getter
@@ -38,8 +40,18 @@ public class Promozione {
 	@Column
 	private Boolean isActive;
 	
+	@Builder.Default
 	@JsonIgnore
 	@ManyToMany(mappedBy = "promozione")
-
 	private Set<Prodotto> prodotto = new HashSet<>();
+	
+	public void addProdotto(Prodotto prod) {
+		prodotto.add(prod);
+	}
+	public void removeProdotto(Prodotto prod) {
+		prodotto.remove(prod);
+	}
+	public Set<Prodotto> getProdotto() {
+		return prodotto;
+	}
 }

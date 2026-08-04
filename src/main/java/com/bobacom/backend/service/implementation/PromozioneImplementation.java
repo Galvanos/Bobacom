@@ -1,5 +1,5 @@
 package com.bobacom.backend.service.implementation;
-import java.util.ArrayList;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import com.bobacom.backend.dto.input.PromozioneRequest;
 import lombok.extern.slf4j.Slf4j;
-import com.bobacom.backend.dto.output.ProdottoDTO;
 import com.bobacom.backend.dto.output.PromozioneDTO;
 import com.bobacom.backend.exceptions.AcademyException;
 import com.bobacom.backend.model.Prodotto;
@@ -28,12 +27,13 @@ public class PromozioneImplementation implements IPromozioneService{
 	
 	@Override
 	public void create(PromozioneRequest req) throws Exception {
-
-		Set<Prodotto> prodotti = new HashSet<Prodotto>();
+		log.debug("promo create request: " + req.getProdotto().toString());
+		Promozione promo = Promozione.builder().sconto(req.getSconto()).isActive(req.getIsActive()).build();
 		for(Integer id: req.getProdotto()) {
-			prodotti.add(prodottoRep.findById(id).orElseThrow(() -> new AcademyException()));
+			promo.addProdotto(prodottoRep.findById(id).orElseThrow(
+					() -> new AcademyException("no such product")));
 		}
-		Promozione promo = Promozione.builder().sconto(req.getSconto()).isActive(req.getIsActive()).prodotto(prodotti).build();
+		log.debug(promo.getProdotto().toArray()[0].toString());
 		promoRep.save(promo);
 	}
 
@@ -85,20 +85,15 @@ public class PromozioneImplementation implements IPromozioneService{
 	public List<PromozioneDTO> list() throws Exception {
 	    return promoRep.findAll().stream()
 	            .map(promo -> {
-	                List<ProdottoDTO> prodottiDTO = promo.getProdotto().stream()
-	                        .map(p -> ProdottoDTO.builder()
-	                                .id(p.getId())
-	                                .nome(p.getNome())
-	                                .descrizione(p.getDescrizione())
-	                                .imgUrl(p.getImgUrl())
-	                                .build())
+	                List<Integer> idProdotti = promo.getProdotto().stream()
+	                        .map(p -> p.getId())
 	                        .collect(Collectors.toList());
 
 	                return PromozioneDTO.builder()
 	                        .id(promo.getId())
 	                        .sconto(promo.getSconto())
 	                        .isActive(promo.getIsActive())
-	                        .prodotto(prodottiDTO)
+	                        .idProdotto(idProdotti)
 	                        .build();
 	            })
 	            .collect(Collectors.toList());
@@ -109,20 +104,15 @@ public class PromozioneImplementation implements IPromozioneService{
 	    Promozione promo = promoRep.findById(id)
 	            .orElseThrow(() -> new AcademyException("Nessuna promozione corrispondente all'id: "));
 
-	    List<ProdottoDTO> prodottiDTO = promo.getProdotto().stream()
-	            .map(p -> ProdottoDTO.builder()
-	                    .id(p.getId())
-	                    .nome(p.getNome())
-	                    .descrizione(p.getDescrizione())
-	                    .imgUrl(p.getImgUrl())
-	                    .build())
+	    List<Integer> idProdotti = promo.getProdotto().stream()
+	            .map(p -> p.getId())
 	            .collect(Collectors.toList());
 
 	    return PromozioneDTO.builder()
 	            .id(promo.getId())
 	            .sconto(promo.getSconto())
 	            .isActive(promo.getIsActive())
-	            .prodotto(prodottiDTO)
+	            .idProdotto(idProdotti)
 	            .build();
 	}
 }
