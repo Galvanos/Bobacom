@@ -19,5 +19,5 @@ public class PromozioneRequest {
 	private Integer id;
 	private Float sconto;
 	private Boolean isActive;
-	List<Prodotto> prodotto;
+	List<Integer> prodotto;
 }
