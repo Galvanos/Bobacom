@@ -3,6 +3,7 @@ package com.bobacom.backend.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -33,7 +34,7 @@ public class ProdottoController {
 			.build());
 	}
 
-	@PutMapping("update")
+	@PatchMapping("update")
 	public ResponseEntity<ResponseDTO> update(@RequestBody (required = true) ProdottoRequest req)  throws Exception{
 		prodottoS.update(req);
 		return ResponseEntity.ok(ResponseDTO.builder()

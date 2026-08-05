@@ -1,5 +1,6 @@
 package com.bobacom.backend.service.implementation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -115,7 +116,14 @@ public class ProdottoImplementation implements IProdottoService{
 			p.setPromozione(promos.stream().collect(Collectors.toSet()));
 			}
 	    
-	    if (req.getComposizione() != null){ 
+		List<Composizione> toRemove = new ArrayList<>();
+	    	for(Composizione comp : p.getComposizione()) {
+	    		if(!req.getComposizione().stream().anyMatch(compo -> compo.getIdIngrediente() == comp.getIngrediente().getId()))
+	    			toRemove.add(comp);
+	    	}
+	    	for(Composizione comp : toRemove) {
+	    		p.removeComposizione(comp);	    		
+	    	}
 	    	for(ComposizioneReq compReq : req.getComposizione()) {
 		    	Ingrediente ingrediente = ingRepo.findById(compReq.getIdIngrediente()).orElseThrow(
 		    			() -> new AcademyException("prodotto.ingrediente.notfound"));
@@ -128,9 +136,7 @@ public class ProdottoImplementation implements IProdottoService{
 	    		} else {
 	    			comp.setQuantita(compReq.getQuantita());
 	    		}
-		    } // non é gestito il caso in cui voglia rimuovere un'ingrediente, bisogna vedere insieme a frontend
-	    }
-	    
+		  }
 	    prodottoRep.save(p);
 	}
 

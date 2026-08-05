@@ -77,4 +77,8 @@ public class Prodotto {
 		composizione.add(comp);
 		comp.setProdotto(this);
 	}
+	public void removeComposizione(Composizione comp) {
+		composizione.remove(comp);
+		comp.setProdotto(this);
+	}
 }
