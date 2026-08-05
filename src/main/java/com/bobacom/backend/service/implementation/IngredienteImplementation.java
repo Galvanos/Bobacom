@@ -75,6 +75,7 @@ public class IngredienteImplementation implements IIngredienteService{
 	@Transactional
 	@Override
 	public void delete(Integer id) throws Exception{
+		log.debug("deleting id: " + id);
 		Ingrediente ing = ingredienteRepo.findById(id).orElseThrow(() -> new AcademyException("ingrediente non trovato"));
 		ingredienteRepo.delete(ing);		
 	}

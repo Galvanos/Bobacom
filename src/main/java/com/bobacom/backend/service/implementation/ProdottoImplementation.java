@@ -102,7 +102,6 @@ public class ProdottoImplementation implements IProdottoService{
 		p.setImgUrl(Optional.ofNullable(req.getImgUrl())
 		        .map(String::trim)
 		        .filter(s -> !s.isEmpty())
-		        .map(String::toUpperCase)
 		        .orElse(p.getImgUrl()));
 		
 		if(req.getTag() !=null) {
