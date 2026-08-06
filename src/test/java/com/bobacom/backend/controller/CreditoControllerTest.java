@@ -50,9 +50,6 @@ public class CreditoControllerTest {
 	@Autowired
 	private IUtenteService utenteService;// il service serve per creare utenti
 
-	@Value(value = "${app.credito.secret:}")
-	private String creditoSecret;
-
 	/**
 	 * Creo un utente e vi aggiungo il credito
 	 * 
@@ -87,7 +84,7 @@ public class CreditoControllerTest {
 		// per definizione, se null corrisponde a zero
 		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
 
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
 				.userId(createdUtenteDTO.getId()).build();
 
 		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
@@ -143,7 +140,7 @@ public class CreditoControllerTest {
 		// per definizione, se null corrisponde a zero
 		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
 
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
 				.build();
 
 		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
@@ -203,7 +200,7 @@ public class CreditoControllerTest {
 		// per definizione, se null corrisponde a zero
 		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
 
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
 				.userId(altroUtenteDTO.getId()).build();
 
 		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
@@ -214,50 +211,6 @@ public class CreditoControllerTest {
 
 	}
 
-	/**
-	 * Provo ad aggiungere credito con il secret sbagliato, mi aspetto che fallisca
-	 * 
-	 * @throws Exception
-	 */
-	@Test
-	public void testAddCreditoWrongSecret() throws Exception {
-		// creo un utente normale con privilegi utente
-		UtenteDTO createdUtenteDTO = utenteService.create(
-				UtenteReq.builder().username("utente").password("password").email("utente@example.com").build());
-
-		// faccio login
-
-		String loginReqJSON = objectMapper
-				.writeValueAsString(LoginReq.builder().username("utente").password("password").build());
-
-		MvcResult mvcResult = mockMvc
-				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
-
-		String responseString = mvcResult.getResponse().getContentAsString();
-
-		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
-
-		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
-		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
-
-		String accessToken = loginDTO.getAccessToken();
-
-		BigDecimal originalCredito = createdUtenteDTO.getCredito();
-
-		// per definizione, se null corrisponde a zero
-		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
-
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
-				.secret(creditoSecret + "_suffisso_per_invalidare_secret").userId(createdUtenteDTO.getId()).build();
-
-		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
-
-		mockMvc.perform(patch("/rest/credito/user/addCredito").content(addCreditoRequestJson)
-				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
-				.andExpect(status().isBadRequest());
-
-	}
 
 	/**
 	 * Provo ad aggiungere credito a un utente inesistente, mi aspetto che fallisca
@@ -296,7 +249,7 @@ public class CreditoControllerTest {
 
 		Assertions.assertThat(createdUtenteDTO.getId()).isNotEqualTo(Integer.MAX_VALUE);
 
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
 				.userId(Integer.MAX_VALUE).build();
 
 		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
@@ -343,7 +296,7 @@ public class CreditoControllerTest {
 		// per definizione, se null corrisponde a zero
 		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
 
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
 				.userId(createdUtenteDTO.getId()).build();
 
 		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
@@ -399,7 +352,7 @@ public class CreditoControllerTest {
 		// per definizione, se null corrisponde a zero
 		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
 
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
 				.build();
 
 		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
@@ -460,7 +413,7 @@ public class CreditoControllerTest {
 		// per definizione, se null corrisponde a zero
 		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
 
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
 				.userId(altroUtenteDTO.getId()).build();
 
 		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
@@ -481,51 +434,6 @@ public class CreditoControllerTest {
 
 	}
 
-	/**
-	 * Provo ad aggiungere credito con il secret sbagliato a un utente
-	 * amministratore, mi aspettto che fallisca
-	 * 
-	 * @throws Exception
-	 */
-	@Test
-	public void testAddCreditoWrongSecretByAdmin() throws Exception {
-		// creo un utente admin con privilegi admin
-		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
-				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
-
-		// faccio login
-
-		String loginReqJSON = objectMapper
-				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
-
-		MvcResult mvcResult = mockMvc
-				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
-
-		String responseString = mvcResult.getResponse().getContentAsString();
-
-		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
-
-		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
-		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
-
-		String accessToken = loginDTO.getAccessToken();
-
-		BigDecimal originalCredito = createdUtenteDTO.getCredito();
-
-		// per definizione, se null corrisponde a zero
-		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
-
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
-				.secret(creditoSecret + "_suffisso_per_invalidare_secret").userId(createdUtenteDTO.getId()).build();
-
-		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
-
-		mockMvc.perform(patch("/rest/credito/admin/addCredito").content(addCreditoRequestJson)
-				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
-				.andExpect(status().isBadRequest());
-
-	}
 
 	/**
 	 * Provo ad aggiungere credito a un utente inesistente da parte di un
@@ -564,7 +472,7 @@ public class CreditoControllerTest {
 
 		Assertions.assertThat(createdUtenteDTO.getId()).isNotEqualTo(Integer.MAX_VALUE);
 
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
 				.userId(Integer.MAX_VALUE).build();
 
 		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
@@ -614,7 +522,7 @@ public class CreditoControllerTest {
 		// per definizione, se null corrisponde a zero
 		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
 
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
 				.userId(createdUtenteDTO.getId()).build();
 
 		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
@@ -671,7 +579,7 @@ public class CreditoControllerTest {
 		// per definizione, se null corrisponde a zero
 		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
 
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
 				.build();
 
 		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
@@ -732,7 +640,7 @@ public class CreditoControllerTest {
 		// per definizione, se null corrisponde a zero
 		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
 
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
 				.userId(altroUtenteDTO.getId()).build();
 
 		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
@@ -753,51 +661,7 @@ public class CreditoControllerTest {
 
 	}
 
-	/**
-	 * Provo ad aggiungere credito con il secret sbagliato a un utente
-	 * amministratore usando il servizio per utente, mi aspettto che fallisca
-	 * 
-	 * @throws Exception
-	 */
-	@Test
-	public void testAddCreditoWrongSecretByAdminUsingUser() throws Exception {
-		// creo un utente admin con privilegi admin
-		UtenteDTO createdUtenteDTO = utenteService.create(UtenteReq.builder().username("admin").password("admin")
-				.email("admin@example.com").ruolo(Ruolo.ADMIN).build());
 
-		// faccio login
-
-		String loginReqJSON = objectMapper
-				.writeValueAsString(LoginReq.builder().username("admin").password("admin").build());
-
-		MvcResult mvcResult = mockMvc
-				.perform(post("/rest/auth/login").content(loginReqJSON).contentType(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andExpect(cookie().exists("refreshToken")).andReturn();
-
-		String responseString = mvcResult.getResponse().getContentAsString();
-
-		LoginDTO loginDTO = objectMapper.readValue(responseString, LoginDTO.class);
-
-		Assertions.assertThat(loginDTO.getAccessToken()).isNotBlank();
-		Assertions.assertThat(loginDTO.getTokenType()).isEqualTo("Bearer");
-
-		String accessToken = loginDTO.getAccessToken();
-
-		BigDecimal originalCredito = createdUtenteDTO.getCredito();
-
-		// per definizione, se null corrisponde a zero
-		originalCredito = Optional.ofNullable(originalCredito).orElse(BigDecimal.ZERO);
-
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
-				.secret(creditoSecret + "_suffisso_per_invalidare_secret").userId(createdUtenteDTO.getId()).build();
-
-		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);
-
-		mockMvc.perform(patch("/rest/credito/user/addCredito").content(addCreditoRequestJson)
-				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken).contentType(MediaType.APPLICATION_JSON))
-				.andExpect(status().isBadRequest());
-
-	}
 
 	/**
 	 * Provo ad aggiungere credito a un utente inesistente da parte di un
@@ -836,7 +700,7 @@ public class CreditoControllerTest {
 
 		Assertions.assertThat(createdUtenteDTO.getId()).isNotEqualTo(Integer.MAX_VALUE);
 
-		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100)).secret(creditoSecret)
+		AddCreditReq addCreditoRequest = AddCreditReq.builder().credit(BigDecimal.valueOf(100))
 				.userId(Integer.MAX_VALUE).build();
 
 		String addCreditoRequestJson = objectMapper.writeValueAsString(addCreditoRequest);

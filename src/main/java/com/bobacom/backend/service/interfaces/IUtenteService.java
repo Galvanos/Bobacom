@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import com.bobacom.backend.dto.input.AddCreditReq;
 import com.bobacom.backend.dto.input.DecreaseCreditReq;
 import com.bobacom.backend.dto.input.UtenteReq;
+import com.bobacom.backend.dto.output.StripedUtenteDTO;
 import com.bobacom.backend.dto.output.UtenteDTO;
 
 public interface IUtenteService {
@@ -77,18 +78,18 @@ public interface IUtenteService {
 	/**
 	 * Funzione richiamabile da admin per aumentare il credito
 	 * @param addCredReq richiesta per aggiungere il credito
-	 * @return l'utente dopo che gli è stato aggiunto il credito
+	 * @return l'utente dopo che gli è stato aggiunto il credito con le informazioni ottenute da stripe
 	 * @throws Exception  in caso di errori
 	 */
-	UtenteDTO addCredit(AddCreditReq addCredReq) throws Exception;
+	StripedUtenteDTO addCredit(AddCreditReq addCredReq) throws Exception;
 	/**
 	 * Funzione richiamabile dall'utente per aggiungersi credito, 
 	 * verifica che ad aggiungere credito sia l'utente stesso o un amministratore
 	 * @param addCreditReq richiesta per aggiungere il credito
-	 * @return l'utente dopo che gli è stato aggiunto il credito
+	 * @return l'utente dopo che gli è stato aggiunto il credito con le informazioni ottenute da stripe
 	 * @throws Exception in caso di errori
 	 */
-	UtenteDTO addCreditByUser(AddCreditReq addCreditReq) throws Exception;
+	StripedUtenteDTO addCreditByUser(AddCreditReq addCreditReq) throws Exception;
 	
 	/**
 	 * Funzione richiamabile da admin per diminuire il credito

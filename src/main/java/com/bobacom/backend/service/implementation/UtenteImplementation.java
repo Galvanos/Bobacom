@@ -1,6 +1,7 @@
 package com.bobacom.backend.service.implementation;
 
 import com.bobacom.backend.controller.AuthController;
+import com.bobacom.backend.controller.CarrelloController;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,6 +24,7 @@ import com.bobacom.backend.dto.input.AddCreditReq;
 import com.bobacom.backend.dto.input.DecreaseCreditReq;
 import com.bobacom.backend.dto.input.UtenteReq;
 import com.bobacom.backend.dto.map.UtenteMap;
+import com.bobacom.backend.dto.output.StripedUtenteDTO;
 import com.bobacom.backend.dto.output.UtenteDTO;
 import com.bobacom.backend.enums.Ruolo;
 import com.bobacom.backend.exceptions.AcademyException;
@@ -32,7 +34,11 @@ import com.bobacom.backend.exceptions.UserNotFoundException;
 import com.bobacom.backend.model.Utente;
 import com.bobacom.backend.repository.IUtenteRepository;
 import com.bobacom.backend.service.interfaces.IUtenteService;
+import com.stripe.Stripe;
+import com.stripe.model.PaymentIntent;
+import com.stripe.param.PaymentIntentCreateParams;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -44,9 +50,24 @@ import lombok.extern.slf4j.Slf4j;
 public class UtenteImplementation implements IUtenteService {
 
 
+	private final CarrelloController carrelloController;
+
 	private final IUtenteRepository repository;
 	
 	private final PasswordEncoder passwordEncoder;
+	
+	
+	/**
+	 * Chiave per accedere all'api stripe
+	 */
+	@Value(value = "${stripe.api.key}")
+	private String stripeApiKey;
+	
+	
+	@PostConstruct
+	public void init() {
+		Stripe.apiKey = stripeApiKey;
+	}
 	
 	
 	/**
@@ -58,16 +79,6 @@ public class UtenteImplementation implements IUtenteService {
 	@Setter
 	@Value(value = "${app.credito.valoreDefault:0}")
 	private BigDecimal creditoDefault;
-
-	
-	/**
-	 * Valore inserito per simulare una transazione sicura per aggiungere il credito, 
-	 * si verifica che un determinato campo del JSON corrisponda a questo valore,
-	 * se non impostata nel file di properties viene lasciata come stringa vuota
-	 */
-	@Getter
-	@Value(value = "${app.credito.secret:}")
-	private String creditoSecret;
 
 	
 	
@@ -234,32 +245,62 @@ public class UtenteImplementation implements IUtenteService {
 
 	@Transactional
 	@Override
-	public UtenteDTO addCredit(AddCreditReq addCredReq) throws Exception {
+	public StripedUtenteDTO addCredit(AddCreditReq addCredReq) throws Exception {
 		Integer userId = addCredReq.getUserId();
 		if(userId == null) {
 			throw new AcademyException("utente non fornito");
 		}
-		String secret = addCredReq.getSecret();
-		if(!Objects.equals(secret,creditoSecret)){
-			throw new AcademyException("secret non valido");
-		}
+		
+		
 		Utente storedUser = repository.findById(userId)
 				.orElseThrow(() -> new UserNotFoundException("utente non trovato"));
 		BigDecimal credito = storedUser.getCredito();
 		if(credito == null) {
 			credito = BigDecimal.ZERO;
 		}
+		
+		//dopo aver verificato l'utenza, lancio il pagamento, in caso di errore non arriva ad aggiornare l'utente
+		//va lanciato qui perché se no si rischierebbe di lanciare il pagamento prima di aver verificato l'utente
+		//ma va fatto prima di modificare il valore del credito dell'utente
 		BigDecimal addingCredit = addCredReq.getCredit();
+		//il valore per stripe è un long in centesimi, indi lo devo moltiplicare e tenere la parte intera
+		//usando exact escludo la presenza di millesimi di euro e di un valore di credito sopra il max long 
+		//anche se è improbabile un aumento di credito dell'ordine dei milioni di euro
+		long amountInCentsLong = addingCredit.multiply(BigDecimal.valueOf(100)).longValueExact();
+				
+		
+		PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+		                .setAmount(amountInCentsLong)
+		                .setCurrency("eur")
+		                .build();
+		
+		PaymentIntent intent = PaymentIntent.create(params);
+		
+		String clientSecret = intent.getClientSecret();
+		
 		BigDecimal resultingCredit = credito.add(addingCredit);
 		storedUser.setCredito(resultingCredit);
 		storedUser = repository.save(storedUser);
-		return UtenteMap.buildUtenteDTO(storedUser, false);
+		UtenteDTO utenteDTO = UtenteMap.buildUtenteDTO(storedUser, false);
+		
+		StripedUtenteDTO toReturn = StripedUtenteDTO.builder()
+										.id(utenteDTO.getId())
+										.username(utenteDTO.getUsername())
+										.credito(utenteDTO.getCredito())
+										.email(utenteDTO.getEmail())
+										.indirizzo(utenteDTO.getIndirizzo())
+										.ordini(utenteDTO.getOrdini())
+										.password(utenteDTO.getPassword())
+										.ruolo(utenteDTO.getRuolo())
+										.clientSecret(clientSecret)
+										.build();
+		return toReturn;
 	}
 
 	
 
 	@Override
-	public UtenteDTO addCreditByUser(AddCreditReq addCreditReq) throws Exception {
+	public StripedUtenteDTO addCreditByUser(AddCreditReq addCreditReq) throws Exception {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		Utente foundUser = null;
 		if(authentication != null) {

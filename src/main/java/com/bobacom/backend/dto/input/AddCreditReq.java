@@ -34,8 +34,4 @@ public class AddCreditReq {
 	 * Valore del credito da aggiungere, {@link BigDecimal} perché si deve garantire una precisione esatta
 	 */
 	private BigDecimal credit;
-	/**
-	 * Valore di sicurezza per impedire chiamate a caso, deve corrispondere a {@link UtenteImplementation#creditoSecret}
-	 */
-	private String secret;
 }
