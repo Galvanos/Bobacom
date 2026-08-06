@@ -2,22 +2,21 @@ package com.bobacom.backend.service.implementation;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.bobacom.backend.component.Carrello;
-import com.bobacom.backend.component.CartItem;
+import com.bobacom.backend.dto.input.OrdineProdottoRequest;
 import com.bobacom.backend.dto.input.OrdineRequest;
-import com.bobacom.backend.dto.map.IngredienteMap;
 import com.bobacom.backend.dto.map.OrdineMap;
 import com.bobacom.backend.dto.output.OrdineDTO;
 import com.bobacom.backend.enums.StatoSpedizione;
+import com.bobacom.backend.exceptions.AcademyException;
 import com.bobacom.backend.model.Ordine;
 import com.bobacom.backend.model.OrdineProdotto;
 import com.bobacom.backend.model.Utente;
 import com.bobacom.backend.repository.IOrdineProdottoRepository;
 import com.bobacom.backend.repository.IOrdineRepository;
+import com.bobacom.backend.repository.IProdottoRepository;
 import com.bobacom.backend.repository.IUtenteRepository;
 import com.bobacom.backend.service.interfaces.IOrdineService;
 
@@ -32,38 +31,38 @@ public class OrdineImplementation implements IOrdineService{
 	private final IUtenteRepository utenteRepo;
 	private final IOrdineRepository ordineRepo;
 	private final IOrdineProdottoRepository opRepo;
+	private final IProdottoRepository prodRepo;
 	
-	private final Carrello cart;
 
 	@Transactional
 	@Override
 	public void create(OrdineRequest req) throws Exception{
 		log.debug("create: {}", req);
-		Utente utente = utenteRepo.findById(req.getUtente_id())
-				.orElseThrow(() -> new Exception("no user found with id: " + req.getUtente_id()));
+		Utente utente = utenteRepo.findById(req.getIdUtente())
+				.orElseThrow(() -> new Exception("no user found with id: " + req.getIdUtente()));
 				
 		Ordine ordine = Ordine.builder()
-				.prezzoTotale(cart.getTotal())
+				.prezzoTotale(req.getPrezzoTotale())
 				.dataCreazione(LocalDateTime.now())
 				.indirizzoDestinazione(req.getIndirizzoDestinazione())
+				.status(StatoSpedizione.valueOf(req.getStatus()))
 				.utente(utente)
 				.build();
-		
 
-		utente.addOrdine(ordine);
 		ordine = ordineRepo.save(ordine);
+		utente.addOrdine(ordine);
 		
-		for(CartItem c : cart.getItems()) {
-			OrdineProdotto op =opRepo.save(OrdineProdotto.builder()
+		for(OrdineProdottoRequest r : req.getProdotti()) {
+			opRepo.save(OrdineProdotto.builder()
 					.ordine(ordine)
-					.prodotto(c.getProdotto())
-					.quantita(c.getQuantita())
-					.prezzo(c.getPrezzo())
+					.prezzo(r.getPrezzo())
+					.summary(r.getSummary())
+					.prodotto(prodRepo.findById(r.getProdotto_id()).orElseThrow(() -> new AcademyException("no such product")))
+					.quantita(r.getQuantita())
 					.build());
 		}
-			
+		
 		log.debug("ordine: {}", ordine);
-		cart.svuotaCarrello();
 		
 	}
 
@@ -95,11 +94,14 @@ public class OrdineImplementation implements IOrdineService{
 		 }
 		 ordineRepo.delete(order);
 	}
-
 	@Override
-	public List<OrdineDTO> list(Integer id, Integer utenteId) throws Exception {
-		List<Ordine> ordineList = ordineRepo.searchByFilter(id, utenteId);
-		return ordineList.stream().map(i -> OrdineMap.buildOrdineDTO(i)).collect(Collectors.toList());
+	public List<OrdineDTO> list(){
+		return OrdineMap.buildOrdineDTOList(ordineRepo.findAll()); 
+	}
+	@Override
+	public List<OrdineDTO> listByUserId(Integer userId){
+		return OrdineMap.buildOrdineDTOList(ordineRepo.findByUtente(utenteRepo.findById(userId).orElseThrow(
+											() -> new AcademyException("no such user")))); 
 	}
 
 }

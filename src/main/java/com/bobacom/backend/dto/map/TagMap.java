@@ -1,4 +1,4 @@
-package com.bobacom.backend.mapping;
+package com.bobacom.backend.dto.map;
 
 import java.util.Collections;
 import java.util.List;

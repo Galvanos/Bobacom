@@ -1,8 +1,10 @@
 package com.bobacom.backend.exceptions;
 
+import org.springframework.http.HttpStatus;
+
 /**
  * Eccezione da lanciare in caso di problemi di autenticazione
- * per fare si che in global exception handler restituisca forbidden
+ * per fare si che in global exception handler restituisca {@link HttpStatus#FORBIDDEN}
  */
 public class ForbiddenException extends AcademyException {
 
@@ -25,6 +27,11 @@ public class ForbiddenException extends AcademyException {
 		super(message, cause);
 	}
 
+	/**
+	 * Costruttore per dotare l'eccezione di un messaggio
+	 * @param message messaggio associato a questa eccezione
+	 * @see #getMessage()
+	 */
 	public ForbiddenException(String message) {
 		super(message);
 	}

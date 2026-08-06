@@ -3,6 +3,7 @@ package com.bobacom.backend.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -32,9 +33,8 @@ public class ProdottoController {
 			.msg("created...")
 			.build());
 	}
-	
 
-	@PutMapping("update")
+	@PatchMapping("update")
 	public ResponseEntity<ResponseDTO> update(@RequestBody (required = true) ProdottoRequest req)  throws Exception{
 		prodottoS.update(req);
 		return ResponseEntity.ok(ResponseDTO.builder()
@@ -50,15 +50,14 @@ public class ProdottoController {
 					.build());	
 	}
 	
-	@GetMapping("/list")
-	public ResponseEntity<Object> list() throws Exception{
-		return ResponseEntity.ok(prodottoS.list());
+	@GetMapping("list")
+	public ResponseEntity<Object> list(	@RequestParam (required = false) String tag,
+										@RequestParam (required = false) Boolean hasDiscount) throws Exception{
+		return ResponseEntity.ok(prodottoS.list(tag, hasDiscount));
 	}
 	
 	@GetMapping("getById")
 	public ResponseEntity<Object> getById(@RequestParam (required = true) Integer id) throws Exception{			
 		return ResponseEntity.ok(prodottoS.getById(id));
 	}
-
-
 }

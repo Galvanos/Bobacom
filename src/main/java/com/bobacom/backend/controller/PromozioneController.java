@@ -52,4 +52,5 @@ public class PromozioneController {
 	public ResponseEntity<Object> getById(@RequestParam (required = true) Integer id) throws Exception{
 		return ResponseEntity.ok(promozioneService.getById(id));
 	}
+
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 
 import com.bobacom.backend.dto.input.AddCreditReq;
+import com.bobacom.backend.dto.input.DecreaseCreditReq;
 import com.bobacom.backend.dto.input.UtenteReq;
 import com.bobacom.backend.dto.output.UtenteDTO;
 
@@ -24,7 +25,6 @@ public interface IUtenteService {
 	 * ed impostati dei valori (ad esempio il credito iniziale e il ruolo come utente)
 	 * @param req la richiesta di creazione utente
 	 * @return l'utente appena creato
-	 * @return 
 	 * @throws Exception in caso di errore
 	 */
 	UtenteDTO createByUser(UtenteReq req) throws Exception;
@@ -38,30 +38,72 @@ public interface IUtenteService {
 	UtenteDTO update(UtenteReq req) throws Exception;
 	/**
 	 * Aggiornamento da parte dell'utente, ad esempio non consente di aggiornare il credito,
-	 * verifica che l'utente che aggiorna sia l'utente stesso
+	 * verifica che l'utente che aggiorna sia l'utente stesso.
+	 * <br/>
+	 * Per non invalidare il JWT, l'utente non può cambiare lo username, può essere fatto da amministratore purché non sia
+	 * l'amministratore stesso
 	 * @param req la richiesta con l'aggiornamento
 	 * @return l'utente appena aggiornato
 	 * @throws Exception in caso di errori
 	 */
 	UtenteDTO updateByUser(UtenteReq req) throws Exception;
 	UtenteDTO getById(Integer id) throws Exception;
+	UtenteDTO getByUsername(String username) throws Exception;
 	/**
 	 * Informazioni riguardo l'utente accessibili solo all'utente stesso,
 	 * verifica che il richiedente sia lo stesso utente collegato
-	 * @param id
+	 * @param id id dell'utente cercato
 	 * @return i dati dell'utente
-	 * @throws Exception
+	 * @throws Exception in caso di errori
 	 */
 	UtenteDTO getByIdByUser(Integer id) throws Exception;
+	/**
+	 * Informazioni riguardo l'utente accessibili solo all'utente stesso,
+	 * verifica che il richiedente sia lo stesso utente collegato
+	 * @param username nome utente cercato
+	 * @return i dati dell'utente
+	 * @throws Exception in caso di errori
+	 */
+	UtenteDTO getByUsernameByUser(String username) throws Exception;
 	List<UtenteDTO> list() throws Exception;
-	void delete(Integer id) throws Exception;
+	/**
+	 * Cancella un utente, un utente non può cancellare sè stesso qualora sia loggato perché ci sarebbe un problema di autenticazione
+	 * @param id id dell'utente da cancellare
+	 * @return l'utente appena cancellato
+	 * @throws Exception in caso di errori, tra cui utente inesistente
+	 */
+	UtenteDTO delete(Integer id) throws Exception;
 	
 	/**
 	 * Funzione richiamabile da admin per aumentare il credito
-	 * @param addCredReq
-	 * @return
-	 * @throws Exception
+	 * @param addCredReq richiesta per aggiungere il credito
+	 * @return l'utente dopo che gli è stato aggiunto il credito
+	 * @throws Exception  in caso di errori
 	 */
 	UtenteDTO addCredit(AddCreditReq addCredReq) throws Exception;
+	/**
+	 * Funzione richiamabile dall'utente per aggiungersi credito, 
+	 * verifica che ad aggiungere credito sia l'utente stesso o un amministratore
+	 * @param addCreditReq richiesta per aggiungere il credito
+	 * @return l'utente dopo che gli è stato aggiunto il credito
+	 * @throws Exception in caso di errori
+	 */
 	UtenteDTO addCreditByUser(AddCreditReq addCreditReq) throws Exception;
+	
+	/**
+	 * Funzione richiamabile da admin per diminuire il credito
+	 * @param decreaseCreditReq richiesta per diminuire il credito
+	 * @return l'utente dopo che gli è stato diminuito il credito
+	 * @throws Exception  in caso di errori
+	 */
+	UtenteDTO decreaseCredit(DecreaseCreditReq decreaseCreditReq) throws Exception;
+	
+	
+	/**
+	 * Funzione richiamabile dall'utente per diminuire il credito
+	 * @param decreaseCreditReq richiesta per diminuire il credito
+	 * @return l'utente dopo che gli è stato diminuito il credito
+	 * @throws Exception  in caso di errori
+	 */
+	UtenteDTO decreaseCreditByUser(DecreaseCreditReq decreaseCreditReq) throws Exception;
 }

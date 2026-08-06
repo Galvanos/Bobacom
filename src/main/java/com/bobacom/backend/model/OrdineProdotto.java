@@ -33,22 +33,24 @@ public class OrdineProdotto {
 	@ManyToOne
 	@JoinColumn(
 			name="id_ordine",
-			foreignKey = @ForeignKey(name="fk_ordine_prodotto"),
-			nullable = false
+			foreignKey = @ForeignKey(name="fk_ordine_prodotto")
 			)
 	private Ordine ordine;
 	
 	@ManyToOne()
 	@JoinColumn(
 			name="prodotto_id",
-			foreignKey = @ForeignKey(name ="fk_prodotto_ordine"),
-			nullable = false
+			referencedColumnName = "id",
+			foreignKey = @ForeignKey(name ="fk_prodotto_ordine")
 			)
 	private Prodotto prodotto;
 	
-	@Column(nullable = false)
+	@Column
+	private String summary;
+	
+	@Column
 	private Integer quantita;
 	
-	@Column(nullable = false)
+	@Column 
 	private BigDecimal prezzo;
 }

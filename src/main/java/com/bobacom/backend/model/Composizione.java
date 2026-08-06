@@ -1,5 +1,7 @@
 package com.bobacom.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,6 +23,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@EqualsAndHashCode(exclude = {"prodotto", "ingrediente"})
 @Entity
 @Table(name="composizione")
 public class Composizione {
@@ -27,6 +31,7 @@ public class Composizione {
 	@GeneratedValue (strategy = GenerationType.IDENTITY)
 	private Integer id;
 	
+	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(
 			name="id_prodotto",
@@ -43,7 +48,5 @@ public class Composizione {
 	
 	@Column(name="quantita")
 	private Integer quantita;
-	
-	
 
 }

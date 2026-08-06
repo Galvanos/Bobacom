@@ -2,7 +2,6 @@ package com.bobacom.backend.dto.input;
 
 import java.math.BigDecimal;
 
-import com.bobacom.backend.enums.Ruolo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

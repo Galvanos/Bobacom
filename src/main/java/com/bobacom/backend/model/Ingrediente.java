@@ -17,6 +17,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,6 +27,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(exclude = {"allergeni", "categoriaIngrediente"})
 @Entity
 @Table(name="ingredienti")
 public class Ingrediente {
@@ -52,14 +54,14 @@ public class Ingrediente {
 	private String colore; // pensato per il seguente utilizzo nella UI
 	
 	@Builder.Default
-	@ManyToMany(fetch = FetchType.EAGER)
+	@ManyToMany(fetch = FetchType.LAZY)
 	@JoinTable(
 			name="ingrediente_allergeni",
 			joinColumns = @JoinColumn (name = "ingrediente_id" ),
 			inverseJoinColumns = @JoinColumn (name = "allergene_id"))
 	Set<Allergeni> allergeni = new HashSet<>();	// lista allergeni, gli oggetti contengono nome e icona da usare in UI
 	
-	@ManyToOne(fetch = FetchType.EAGER)
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name="categoria_id")
 	private CategoriaIngrediente categoriaIngrediente;	// categoria, aka in che sezione della ui composizione prodotto 
 														// vogliamo inserirlo, es: thé, succo, latte, topping, etc
